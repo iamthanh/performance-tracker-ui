@@ -1,0 +1,122 @@
+.calendar-card {
+  padding: 0;
+  overflow-x: auto;
+}
+
+.calendar {
+  min-width: 860px;
+}
+
+.cal-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) 120px;
+}
+
+.cal-header > div {
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.cal-day,
+.cal-week {
+  min-height: 112px;
+  padding: 6px;
+  border-bottom: 1px solid var(--grid);
+  border-right: 1px solid var(--grid);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cal-row:last-child .cal-day,
+.cal-row:last-child .cal-week {
+  border-bottom: 0;
+}
+
+.cal-week {
+  border-right: 0;
+  background: var(--surface-2);
+  font-size: 12px;
+}
+
+.cal-week dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+}
+.cal-week dt {
+  color: var(--text-muted);
+}
+.cal-week dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 550;
+}
+
+.cal-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-day.outside .cal-date {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.cal-day.today .cal-date {
+  display: inline-block;
+  align-self: flex-start;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0 7px;
+  font-weight: 600;
+}
+
+.workout {
+  display: block;
+  padding: 5px 7px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--series-1);
+  border-radius: 6px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 1.3;
+}
+.workout:hover {
+  background: var(--surface-hover);
+  text-decoration: none;
+}
+
+.workout-top {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-secondary);
+  gap: 6px;
+}
+.workout-top .sport {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.workout-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+}
+
+.workout-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  font-variant-numeric: tabular-nums;
+}
