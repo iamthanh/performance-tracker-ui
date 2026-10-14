@@ -122,7 +122,12 @@ export function ActivitiesPage() {
                       className="clickable"
                       tabIndex={0}
                       onClick={() => navigate(to)}
-                      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && navigate(to)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          navigate(to);
+                        }
+                      }}
                     >
                       <td>{formatFullDay(a.local_date)}</td>
                       <td className="left">
@@ -147,7 +152,7 @@ export function ActivitiesPage() {
           </div>
         )}
       </section>
-      <p className="small muted">{rows.length} workouts</p>
+      {activities.data ? <p className="small muted">{rows.length} workouts</p> : null}
     </>
   );
 }

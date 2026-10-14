@@ -45,7 +45,8 @@ export function FitnessPage() {
   const weeks = useSummary({ start_date: weekStart(range.start), end_date: range.end, group_by: "week" });
   const c = useColors();
 
-  const days = useMemo(() => trimLeadingEmpty(load.data ?? []), [load.data]);
+  // "All time" starts years before the first workout; other ranges show exactly what was asked for.
+  const days = useMemo(() => (preset.all ? trimLeadingEmpty(load.data ?? []) : (load.data ?? [])), [load.data, preset.all]);
   const points: Point[] = useMemo(() => days.map((d) => ({ ...d, tssDot: d.tss > 0 ? d.tss : null })), [days]);
   const span = days.length ? daysBetween(days[0]!.date, days[days.length - 1]!.date) : 0;
   const tick = dateTick(span);
@@ -99,7 +100,7 @@ export function FitnessPage() {
               value={num(days.slice(-7).reduce((t, d) => t + d.tss, 0))}
               unit="TSS"
             />
-            <StatTile label={`Since ${formatDay(days[0]!.date)}`} value={num(days.reduce((t, d) => t + d.tss, 0))} unit="TSS" />
+            <StatTile label={`Since ${formatFullDay(days[0]!.date)}`} value={num(days.reduce((t, d) => t + d.tss, 0))} unit="TSS" />
           </div>
 
           {unscored > 0 ? (

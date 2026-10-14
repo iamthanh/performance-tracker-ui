@@ -1,5 +1,5 @@
 import type { LoadDay, ThresholdValue } from "../api/types";
-import { addDays, addMonths, daysBetween, monthEnd, presetRange, RANGE_PRESETS, today, weekStart } from "./dates";
+import { addDays, addMonths, daysBetween, formatShortMonth, monthEnd, presetRange, RANGE_PRESETS, today, weekStart } from "./dates";
 import { compact, duration, durationLabel, hoursMinutes, num, signed, sportLabel } from "./format";
 import { formStatus, rampRate, thresholdHistory, thresholdOn, trimLeadingEmpty } from "./training";
 
@@ -27,6 +27,10 @@ describe("dates", () => {
     expect(presetRange(ninety, "2026-10-14")).toEqual({ start: "2026-07-17", end: "2026-10-14" });
     const all = RANGE_PRESETS.find((p) => p.all)!;
     expect(presetRange(all, "2026-10-14").start).toBe("2000-01-01");
+  });
+
+  it("labels months with their year", () => {
+    expect(formatShortMonth("2026-10-01")).toMatch(/'26$/);
   });
 
   it("uses the local calendar day for today", () => {
@@ -116,6 +120,15 @@ describe("training", () => {
     expect(thresholdOn(timeline, "2026-07-01")).toBe(260);
     expect(thresholdOn(timeline, "2026-09-15")).toBe(240);
     expect(thresholdOn([], "2026-01-01")).toBeNull();
+    // Before the first entry, a same-day tie goes to the lower value, as min((date, value)) does in the backend.
+    const tie = [v("2026-03-01", "manual", 250), v("2026-03-01", "auto", 210)];
+    expect(thresholdOn(tie, "2026-01-01")).toBe(210);
+  });
+
+  it("marks each point of the history with the entry that set it", () => {
+    // An auto value equal to an earlier manual value is still auto.
+    const history = thresholdHistory([v("2026-01-01", "manual", 250), v("2026-02-01", "auto", 260), v("2026-04-01", "auto", 250)], "2026-04-01");
+    expect(history.map((p) => p.origin)).toEqual(["manual", "auto", "auto"]);
   });
 
   it("builds the history of the value in effect", () => {

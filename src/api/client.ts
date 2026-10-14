@@ -19,10 +19,14 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    /** True when the API could not be reached at all (nothing listening, or the dev proxy failed). */
+    readonly unreachable = false,
   ) {
     super(message);
   }
 }
+
+const UNREACHABLE = "Cannot reach the fitness-hub API. Is `fitness-hub serve-api` running?";
 
 type Params = Record<string, string | number | string[] | undefined | null>;
 
@@ -41,21 +45,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     response = await fetch(`/api${path}`, init);
   } catch {
-    throw new ApiError(0, "Cannot reach the fitness-hub API. Is `fitness-hub serve-api` running?");
+    throw new ApiError(0, UNREACHABLE, true);
   }
   if (!response.ok) {
     let detail = response.statusText;
+    let fromApi = false; // the API always answers errors with a JSON {"detail": ...}
     try {
       const body = (await response.json()) as { detail?: unknown };
-      if (typeof body.detail === "string") detail = body.detail;
-      else if (Array.isArray(body.detail)) detail = body.detail.map((d: { msg?: string }) => d.msg).join("; ");
+      if (typeof body.detail === "string") {
+        detail = body.detail;
+        fromApi = true;
+      } else if (Array.isArray(body.detail)) {
+        detail = body.detail.map((d: { msg?: string }) => d.msg).join("; ");
+        fromApi = true;
+      }
     } catch {
-      // keep the status text
+      // not JSON: an error page from a proxy in front of the API
     }
-    if (response.status === 502 || response.status === 504) {
-      detail = "Cannot reach the fitness-hub API. Is `fitness-hub serve-api` running?";
-    }
-    throw new ApiError(response.status, detail);
+    // Vite's dev proxy answers a refused connection with an empty 500; gateways use 502/504.
+    const unreachable = !fromApi && [500, 502, 504].includes(response.status);
+    throw new ApiError(response.status, unreachable ? UNREACHABLE : detail, unreachable);
   }
   return (await response.json()) as T;
 }

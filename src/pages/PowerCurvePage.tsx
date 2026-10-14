@@ -13,17 +13,33 @@ const COMPARE = RANGE_PRESETS.filter((p) => p.id !== "42d");
 const KEY_DURATIONS = [5, 60, 300, 1200, 3600];
 const TICKS = [1, 5, 15, 60, 300, 1200, 3600, 10800, 18000];
 
-function RangeSelect({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function rangeLabel(id: string): string {
+  const preset = COMPARE.find((p) => p.id === id);
+  if (!preset) return "";
+  return preset.all ? "All time" : `Last ${preset.label}`;
+}
+
+function RangeSelect({
+  label,
+  value,
+  onChange,
+  allowNone = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  allowNone?: boolean;
+}) {
   return (
     <label className="field">
       {label}
       <select value={value} onChange={(e) => onChange(e.target.value)}>
         {COMPARE.map((p) => (
           <option key={p.id} value={p.id}>
-            {p.all ? "All time" : `Last ${p.label}`}
+            {rangeLabel(p.id)}
           </option>
         ))}
-        <option value="none">None</option>
+        {allowNone ? <option value="none">None</option> : null}
       </select>
     </label>
   );
@@ -37,18 +53,19 @@ export function PowerCurvePage() {
   const rangeB = presetB ? presetRange(presetB) : null;
   const curveA = usePowerCurve({ start_date: rangeA.start, end_date: rangeA.end });
   const curveB = usePowerCurve({ start_date: rangeB?.start, end_date: rangeB?.end }, !!rangeB);
+  const hasB = !!rangeB;
   const ftp = useThresholds(today());
   const c = useColors();
 
-  const labelA = COMPARE.find((p) => p.id === a)?.all ? "All time" : `Last ${COMPARE.find((p) => p.id === a)?.label}`;
-  const labelB = presetB ? (presetB.all ? "All time" : `Last ${presetB.label}`) : "";
+  const labelA = rangeLabel(a);
+  const labelB = rangeLabel(b);
 
   const rows = useMemo(() => {
     const byA = new Map((curveA.data ?? []).map((p) => [p.duration_s, p]));
     const byB = new Map((curveB.data ?? []).map((p) => [p.duration_s, p]));
-    const durations = [...new Set([...byA.keys(), ...(rangeB ? byB.keys() : [])])].sort((x, y) => x - y);
-    return durations.map((d) => ({ d, a: byA.get(d) ?? null, b: rangeB ? (byB.get(d) ?? null) : null }));
-  }, [curveA.data, curveB.data, rangeB]);
+    const durations = [...new Set([...byA.keys(), ...(hasB ? byB.keys() : [])])].sort((x, y) => x - y);
+    return durations.map((d) => ({ d, a: byA.get(d) ?? null, b: hasB ? (byB.get(d) ?? null) : null }));
+  }, [curveA.data, curveB.data, hasB]);
   const chart = rows.map((r) => ({ d: r.d, a: r.a?.watts ?? null, b: r.b?.watts ?? null }));
   const currentFtp = ftp.data?.in_effect?.ftp_w ?? null;
 
@@ -61,7 +78,7 @@ export function PowerCurvePage() {
         </div>
         <div className="filters">
           <RangeSelect label="Compare" value={a} onChange={setA} />
-          <RangeSelect label="Against" value={b} onChange={setB} />
+          <RangeSelect label="Against" value={b} onChange={setB} allowNone />
         </div>
       </div>
 

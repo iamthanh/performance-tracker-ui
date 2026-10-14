@@ -554,9 +554,14 @@ table.data tr.clickable {
 .recharts-cartesian-axis-tick-value {
   font-variant-numeric: tabular-nums;
 }
-.recharts-wrapper:focus,
-.recharts-surface:focus {
+/* Recharts makes each chart a keyboard stop (arrow keys move the tooltip): show focus for keyboards only. */
+.recharts-wrapper:focus:not(:focus-visible),
+.recharts-surface:focus:not(:focus-visible) {
   outline: none;
+}
+.recharts-surface:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .sr-only {
@@ -600,7 +605,7 @@ table.data tr.clickable {
     padding: 0 16px;
     gap: 12px;
   }
-  .topbar-end {
+  .topbar-end .freshness {
     display: none;
   }
   .main {

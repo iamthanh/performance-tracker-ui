@@ -4,7 +4,7 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { useThresholdMutations, useThresholds } from "../api/hooks";
 import type { ThresholdMetric } from "../api/types";
 import { ChartCard, Empty, ErrorState, Loading, StatTile, TooltipBox } from "../components/ui";
-import { formatFullDay, parseISO, toISO, today } from "../lib/dates";
+import { formatFullDay, formatShortMonth, parseISO, toISO, today } from "../lib/dates";
 import { num } from "../lib/format";
 import { axisProps, gridProps, useColors } from "../lib/theme";
 import { thresholdHistory } from "../lib/training";
@@ -40,7 +40,7 @@ export function SettingsPage() {
     const last = Number(ftpHistory[ftpHistory.length - 1]!.date.slice(0, 4));
     return Array.from({ length: Math.max(0, last - first + 1) }, (_, i) => Date.UTC(first + i, 0, 1));
   }, [ftpHistory]);
-  const timeTick = (t: number) => toISO(new Date(t)).slice(0, 4);
+  const timeTick = (t: number) => (yearTicks.length ? toISO(new Date(t)).slice(0, 4) : formatShortMonth(toISO(new Date(t))));
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -128,7 +128,11 @@ export function SettingsPage() {
         <p className="small muted" style={{ marginBottom: 0 }}>
           {meta(metric).help}
         </p>
-        {set.isError ? <p className="small" style={{ color: "var(--critical-text)" }}>{(set.error as Error).message}</p> : null}
+        {set.isError || remove.isError ? (
+          <p className="small" role="alert" style={{ color: "var(--critical-text)" }}>
+            {((set.error ?? remove.error) as Error).message}
+          </p>
+        ) : null}
         {message ? <p className="small" style={{ color: "var(--success-text)" }}>{message}</p> : null}
       </section>
 
@@ -142,7 +146,7 @@ export function SettingsPage() {
                 type="number"
                 scale="time"
                 domain={["dataMin", "dataMax"]}
-                ticks={yearTicks}
+                ticks={yearTicks.length ? yearTicks : undefined}
                 {...axisProps(c)}
                 tickFormatter={timeTick}
               />
@@ -202,7 +206,16 @@ export function SettingsPage() {
                         type="button"
                         className="btn ghost small"
                         disabled={remove.isPending}
-                        onClick={() => remove.mutate({ metric: v.metric, effectiveDate: v.effective_date })}
+                        onClick={() => {
+                          const what = `${meta(v.metric).label} ${num(v.value, Number.isInteger(v.value) ? 0 : 1)} ${meta(v.metric).unit} from ${formatFullDay(v.effective_date)}`;
+                          if (window.confirm(`Remove your ${what}? Workouts from that date will be re-scored.`)) {
+                            setMessage(null);
+                            remove.mutate(
+                              { metric: v.metric, effectiveDate: v.effective_date },
+                              { onSuccess: (r) => setMessage(`Removed. ${r.analysis.rescored} workouts re-scored.`) },
+                            );
+                          }
+                        }}
                       >
                         Remove
                       </button>

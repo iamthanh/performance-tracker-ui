@@ -28,8 +28,14 @@ export const useSummary = (p: Parameters<typeof api.summary>[0]) =>
 export const useTrainingLoad = (p: Parameters<typeof api.trainingLoad>[0]) =>
   useQuery({ queryKey: ["training-load", p], queryFn: () => api.trainingLoad(p), ...keep });
 
-export const usePowerCurve = (p: Parameters<typeof api.powerCurve>[0], enabled = true) =>
-  useQuery({ queryKey: ["power-curve", p], queryFn: () => api.powerCurve(p), enabled, ...keep });
+/** `keepPrevious`: false where the previous result would be wrong to show meanwhile (another workout's best). */
+export const usePowerCurve = (p: Parameters<typeof api.powerCurve>[0], enabled = true, keepPrevious = true) =>
+  useQuery({
+    queryKey: ["power-curve", p],
+    queryFn: () => api.powerCurve(p),
+    enabled,
+    ...(keepPrevious ? keep : {}),
+  });
 
 export const useDailyMetrics = (p: Parameters<typeof api.dailyMetrics>[0]) =>
   useQuery({ queryKey: ["daily-metrics", p], queryFn: () => api.dailyMetrics(p), ...keep });

@@ -27,12 +27,34 @@ const SOURCE_PREFERENCE = ["garmin", "google_health"];
 
 type Series = { date: string; value: number }[];
 
+const sourceRank = (source: string) => {
+  const i = SOURCE_PREFERENCE.indexOf(source);
+  return i === -1 ? 99 : i;
+};
+
+/** One item per date: the preferred source's, and within a source the latest. */
+function onePerDay<T>(items: T[], date: (t: T) => string, source: (t: T) => string, order: (t: T) => string): T[] {
+  const best = new Map<string, T>();
+  for (const item of items) {
+    const key = date(item);
+    const current = best.get(key);
+    if (
+      !current ||
+      sourceRank(source(item)) < sourceRank(source(current)) ||
+      (source(item) === source(current) && order(item) > order(current))
+    ) {
+      best.set(key, item);
+    }
+  }
+  return [...best.values()].sort((a, b) => date(a).localeCompare(date(b)));
+}
+
 /** One value per day for a metric, from the preferred source that has it. */
 function metricSeries(rows: DailyMetric[], metric: string): Series {
   const best = new Map<string, { rank: number; value: number }>();
   for (const r of rows) {
     if (r.metric !== metric) continue;
-    const rank = SOURCE_PREFERENCE.indexOf(r.source) === -1 ? 99 : SOURCE_PREFERENCE.indexOf(r.source);
+    const rank = sourceRank(r.source);
     const current = best.get(r.date);
     if (!current || rank < current.rank) best.set(r.date, { rank, value: r.value });
   }
@@ -59,12 +81,18 @@ export function HealthPage() {
   const hrv = useMemo(() => metricSeries(rows, "hrv_rmssd_ms"), [rows]);
   const sleepScore = useMemo(() => metricSeries(rows, "sleep_score"), [rows]);
   const weight = useMemo(
-    () => (body.data ?? []).filter((b) => b.metric === "weight_kg").map((b) => ({ date: b.ts.slice(0, 10), value: b.value })),
+    () =>
+      onePerDay(
+        (body.data ?? []).filter((b) => b.metric === "weight_kg"),
+        (b) => b.ts.slice(0, 10),
+        (b) => b.source,
+        (b) => b.ts,
+      ).map((b) => ({ date: b.ts.slice(0, 10), value: b.value })),
     [body.data],
   );
   const nights = useMemo(
     () =>
-      (sleep.data ?? []).map((s) => ({
+      onePerDay(sleep.data ?? [], (s) => s.local_date, (s) => s.source, (s) => s.end_time ?? "").map((s) => ({
         date: s.local_date,
         deep: (s.minutes_deep ?? 0) / 60,
         light: (s.minutes_light ?? 0) / 60,
@@ -77,10 +105,11 @@ export function HealthPage() {
   const end = range.end;
   const nothing = !metrics.isPending && !sleep.isPending && !body.isPending && !rows.length && !nights.length && !weight.length;
 
-  if (metrics.isError) {
+  const failed = [metrics, sleep, body].find((q) => q.isError);
+  if (failed) {
     return (
       <div className="card">
-        <ErrorState error={metrics.error} />
+        <ErrorState error={failed.error} />
       </div>
     );
   }
@@ -243,7 +272,7 @@ function SmallLine({
   const c = useColors();
   return (
     <ResponsiveContainer width="100%" height={160}>
-      <ComposedChart data={data} syncId={syncId} margin={{ top: 8, right: 12, bottom: 0, left: -8 }}>
+      <ComposedChart data={data} syncId={syncId} syncMethod="value" margin={{ top: 8, right: 12, bottom: 0, left: -8 }}>
         <CartesianGrid {...gridProps(c)} />
         <XAxis dataKey="date" {...axisProps(c)} tickFormatter={formatDay} minTickGap={40} />
         <YAxis {...axisProps(c)} width={44} domain={["auto", "auto"]} />

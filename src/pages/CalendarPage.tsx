@@ -12,7 +12,8 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export function CalendarPage() {
   const [params, setParams] = useSearchParams();
-  const month = monthStart(params.get("month") ? `${params.get("month")}-01` : today());
+  const requested = params.get("month") ?? "";
+  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(requested) ? `${requested}-01` : monthStart(today());
   const first = weekStart(month);
   const last = addDays(weekStart(monthEnd(month)), 6);
   const activities = useActivities({ start_date: first, end_date: last, limit: 2000 });
@@ -57,7 +58,7 @@ export function CalendarPage() {
       </div>
 
       {totals ? (
-        <div className="tiles">
+        <div className={monthTotals.isPlaceholderData ? "tiles refetching" : "tiles"}>
           <StatTile label="Workouts" value={String(totals.count)} />
           <StatTile label="Time" value={num(totals.moving_hours, 1)} unit="h" />
           <StatTile label="Distance" value={num(totals.distance_km)} unit="km" />
@@ -101,7 +102,7 @@ export function CalendarPage() {
                     </div>
                   );
                 })}
-                <WeekCell totals={weekTotals.get(w)} future={w > now} />
+                <WeekCell totals={weekTotals.get(w)} future={addDays(w, 6) >= now} />
               </div>
             ))}
           </div>

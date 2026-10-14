@@ -12,7 +12,7 @@ export function Loading({ label = "Loading…" }: { label?: string }) {
 
 export function ErrorState({ error }: { error: unknown }) {
   const message = error instanceof Error ? error.message : String(error);
-  const unreachable = error instanceof ApiError && (error.status === 0 || error.status >= 502);
+  const unreachable = error instanceof ApiError && error.unreachable;
   return (
     <div className="state error" role="alert">
       <strong>{unreachable ? "The fitness-hub API is not reachable" : "Something went wrong"}</strong>

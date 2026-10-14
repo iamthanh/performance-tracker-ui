@@ -73,7 +73,7 @@ export function ActivityPage() {
           <Loading label="Loading charts…" />
         </div>
       ) : (
-        <StreamCharts streams={streams.data} />
+        <StreamCharts streams={streams.data} running={d.activity.sport === "running" || d.activity.sport === "walking" || d.activity.sport === "hiking"} />
       )}
       <div className="grid two">
         {d.analysis?.power_zones ? (
@@ -100,7 +100,7 @@ export function ActivityPage() {
           </section>
         ) : null}
       </div>
-      {d.laps.length > 1 ? <LapsTable laps={d.laps} /> : null}
+      {d.laps.length > 1 ? <LapsTable laps={d.laps} running={d.activity.sport === "running"} /> : null}
     </>
   );
 }
@@ -126,20 +126,33 @@ function Header({ detail }: { detail: ActivityDetail }) {
 function Tiles({ detail }: { detail: ActivityDetail }) {
   const a = detail.activity;
   const m = detail.analysis;
-  const tssHint = m?.tss_method === "hr" ? "from heart rate" : m?.tss_method === "power" ? "from power" : undefined;
+  const byHr = m?.tss_method === "hr";
+  const tssHint = byHr ? "from heart rate" : m?.tss_method === "power" ? "from power" : undefined;
+  const ifHint = byHr
+    ? m?.threshold_hr
+      ? `Threshold ${num(m.threshold_hr)} bpm`
+      : undefined
+    : m?.ftp_w
+      ? `FTP ${num(m.ftp_w)} W`
+      : undefined;
+  const hasPower = isNum(m?.normalized_power_w) || isNum(m?.avg_power_w);
   return (
     <div className="tiles">
       <StatTile label="Moving time" value={duration(a.moving_s ?? m?.timer_s)} hint={`Elapsed ${duration(a.duration_s)}`} />
       <StatTile label="Distance" value={isNum(a.distance_m) ? num(a.distance_m / 1000, 1) : "—"} unit="km" />
       <StatTile label="Elevation" value={num(a.elevation_gain_m)} unit="m" />
       <StatTile label="TSS" value={num(m?.tss)} hint={tssHint} />
-      <StatTile label="Intensity (IF)" value={num(m?.intensity_factor, 2)} hint={m?.ftp_w ? `FTP ${num(m.ftp_w)} W` : undefined} />
-      <StatTile label="Normalized power" value={num(m?.normalized_power_w)} unit="W" hint={isNum(m?.avg_power_w) ? `Avg ${num(m?.avg_power_w)} W` : undefined} />
-      <StatTile label="Variability (VI)" value={num(m?.variability_index, 2)} />
-      <StatTile label="Efficiency (EF)" value={num(m?.efficiency_factor, 2)} hint="NP ÷ avg HR" />
-      <StatTile label="Decoupling (Pw:HR)" value={pct(m?.decoupling_pct)} hint="2nd half vs 1st" />
-      <StatTile label="Work" value={num(m?.work_kj)} unit="kJ" hint={isNum(a.calories) ? `${num(a.calories)} kcal` : undefined} />
-      <StatTile label="Heart rate" value={num(m?.avg_hr ?? a.avg_hr)} unit="bpm" hint={`Max ${num(m?.max_hr ?? a.max_hr)} bpm`} />
+      <StatTile label="Intensity (IF)" value={num(m?.intensity_factor, 2)} hint={ifHint} />
+      {hasPower ? (
+        <>
+          <StatTile label="Normalized power" value={num(m?.normalized_power_w)} unit="W" hint={isNum(m?.avg_power_w) ? `Avg ${num(m?.avg_power_w)} W` : undefined} />
+          <StatTile label="Variability (VI)" value={num(m?.variability_index, 2)} />
+          <StatTile label="Efficiency (EF)" value={num(m?.efficiency_factor, 2)} hint="NP ÷ avg HR" />
+          <StatTile label="Decoupling (Pw:HR)" value={pct(m?.decoupling_pct)} hint="2nd half vs 1st" />
+          <StatTile label="Work" value={num(m?.work_kj)} unit="kJ" hint={isNum(a.calories) ? `${num(a.calories)} kcal` : undefined} />
+        </>
+      ) : null}
+      <StatTile label="Heart rate" value={num(m?.avg_hr ?? a.avg_hr)} unit="bpm" hint={`Max ${num(a.max_hr ?? m?.max_hr)} bpm`} />
     </div>
   );
 }
@@ -150,21 +163,26 @@ function elapsedLabel(seconds: number): string {
   return h ? `${h}:${String(m).padStart(2, "0")}` : `${m}m`;
 }
 
-function StreamCharts({ streams }: { streams: Streams }) {
+function StreamCharts({ streams, running }: { streams: Streams; running: boolean }) {
   const c = useColors();
   const [hover, setHover] = useState<number | null>(null);
-  const channels = CHANNELS.filter((ch) => streams[ch.key]?.some((v) => v !== null));
+  // FIT files record running cadence per leg (strides/min); watches show steps/min, twice that.
+  const specs = useMemo(
+    () => CHANNELS.map((ch) => (ch.key === "cadence" && running ? { ...ch, unit: "spm", scale: 2 } : ch)),
+    [running],
+  );
+  const channels = specs.filter((ch) => streams[ch.key]?.some((v) => v !== null));
   const rows = useMemo(
     () =>
       streams.time.map((t, i) => {
         const row: Record<string, number | null> = { t };
-        for (const ch of CHANNELS) {
+        for (const ch of specs) {
           const v = streams[ch.key]?.[i];
           row[ch.key] = v === null || v === undefined ? null : v * (ch.scale ?? 1);
         }
         return row;
       }),
-    [streams],
+    [streams, specs],
   );
   const at = hover !== null ? rows[hover] : undefined;
   const onMove = (state: { activeTooltipIndex?: number | string | null }) => {
@@ -316,7 +334,7 @@ function ZoneCard({ title, zones, unit, threshold }: { title: string; zones: Zon
 function RideCurve({ detail }: { detail: ActivityDetail }) {
   const c = useColors();
   const day = detail.activity.local_date;
-  const best = usePowerCurve({ start_date: addDays(day, -89), end_date: day });
+  const best = usePowerCurve({ start_date: addDays(day, -89), end_date: day }, true, false);
   const ride = detail.analysis!.power_curve;
   const bestBy = new Map((best.data ?? []).map((p) => [p.duration_s, p.watts]));
   const data = ride.map((p: CurvePoint) => ({ d: p.duration_s, ride: p.watts, best: bestBy.get(p.duration_s) ?? null }));
@@ -386,7 +404,9 @@ function RideCurve({ detail }: { detail: ActivityDetail }) {
   );
 }
 
-function LapsTable({ laps }: { laps: Lap[] }) {
+function LapsTable({ laps, running }: { laps: Lap[]; running: boolean }) {
+  const hasPower = laps.some((lap) => isNum(lap.avg_power));
+  const hasCadence = laps.some((lap) => isNum(lap.avg_cadence));
   return (
     <section className="card" aria-label="Laps">
       <div className="card-head">
@@ -399,11 +419,15 @@ function LapsTable({ laps }: { laps: Lap[] }) {
               <th>Lap</th>
               <th>Time</th>
               <th>Distance</th>
-              <th>Avg power</th>
-              <th>NP</th>
-              <th>Max power</th>
+              {hasPower ? (
+                <>
+                  <th>Avg power</th>
+                  <th>NP</th>
+                  <th>Max power</th>
+                </>
+              ) : null}
               <th>Avg HR</th>
-              <th>Cadence</th>
+              {hasCadence ? <th>Cadence</th> : null}
               <th>Ascent</th>
             </tr>
           </thead>
@@ -413,11 +437,15 @@ function LapsTable({ laps }: { laps: Lap[] }) {
                 <td>{i + 1}</td>
                 <td>{duration(lap.total_timer_time ?? lap.total_elapsed_time)}</td>
                 <td>{km(lap.total_distance, 2)}</td>
-                <td>{withUnit(lap.avg_power, "W")}</td>
-                <td>{withUnit(lap.normalized_power, "W")}</td>
-                <td>{withUnit(lap.max_power, "W")}</td>
+                {hasPower ? (
+                  <>
+                    <td>{withUnit(lap.avg_power, "W")}</td>
+                    <td>{withUnit(lap.normalized_power, "W")}</td>
+                    <td>{withUnit(lap.max_power, "W")}</td>
+                  </>
+                ) : null}
                 <td>{num(lap.avg_heart_rate)}</td>
-                <td>{num(lap.avg_cadence)}</td>
+                {hasCadence ? <td>{num(isNum(lap.avg_cadence) && running ? lap.avg_cadence * 2 : lap.avg_cadence)}</td> : null}
                 <td>{withUnit(lap.total_ascent, "m")}</td>
               </tr>
             ))}

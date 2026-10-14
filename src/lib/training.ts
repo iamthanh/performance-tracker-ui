@@ -29,16 +29,26 @@ export function trimLeadingEmpty(days: LoadDay[]): LoadDay[] {
  * a manual value the latest automatic one applies; before the first value, the first one applies.
  */
 export function thresholdOn(values: ThresholdValue[], day: string): number | null {
-  const sorted = [...values].sort((a, b) => a.effective_date.localeCompare(b.effective_date));
-  const manual = sorted.filter((v) => v.origin === "manual");
-  const auto = sorted.filter((v) => v.origin === "auto");
+  return thresholdEntryOn(values, day)?.value ?? null;
+}
+
+/** The entry whose value is in effect on `day` (see `thresholdOn`). */
+export function thresholdEntryOn(values: ThresholdValue[], day: string): ThresholdValue | null {
+  const byDate = (a: ThresholdValue, b: ThresholdValue) => a.effective_date.localeCompare(b.effective_date);
+  const manual = values.filter((v) => v.origin === "manual").sort(byDate);
+  const auto = values.filter((v) => v.origin === "auto").sort(byDate);
   const latest = (list: ThresholdValue[]) => [...list].reverse().find((v) => v.effective_date <= day);
   const m = latest(manual);
   const a = latest(auto);
-  if (!m && !a) return sorted[0]?.value ?? null;
-  if (!m) return a!.value;
+  if (!m && !a) {
+    // Before the first entry: the earliest, ties broken by value like the backend's min((date, value)).
+    const first = [manual[0], auto[0]].filter((v): v is ThresholdValue => !!v);
+    first.sort((x, y) => byDate(x, y) || x.value - y.value);
+    return first[0] ?? null;
+  }
+  if (!m) return a!;
   const surpassed = auto.some((v) => v.effective_date > m.effective_date && v.effective_date <= day && v.value > m.value);
-  return surpassed && a ? a.value : m.value;
+  return surpassed && a ? a : m;
 }
 
 /** Step series of the value in effect: one point per date it can change, plus today. */
@@ -50,11 +60,10 @@ export function thresholdHistory(
   if (!dates.length) return [];
   const points: { date: string; value: number; origin: "manual" | "auto" }[] = [];
   for (const date of [...dates, ...(dates[dates.length - 1]! < end ? [end] : [])]) {
-    const value = thresholdOn(values, date);
-    if (value === null) continue;
-    const origin = values.some((v) => v.origin === "manual" && v.value === value && v.effective_date <= date) ? "manual" : "auto";
-    if (points.length && points[points.length - 1]!.value === value && date !== end) continue;
-    points.push({ date, value, origin });
+    const entry = thresholdEntryOn(values, date);
+    if (!entry) continue;
+    if (points.length && points[points.length - 1]!.value === entry.value && date !== end) continue;
+    points.push({ date, value: entry.value, origin: entry.origin });
   }
   return points;
 }

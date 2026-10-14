@@ -61,6 +61,6 @@ The charts follow a few fixed rules so they stay honest and readable:
   - Form uses a diverging blue/red split at zero.
   - Single-series charts (zones, weekly TSS) use one colour, with labels carrying identity.
   - Text never wears a series colour.
-- **Every chart has a Table view** with the same numbers, and every value in a tooltip is also reachable there.
+- **Data charts have a Table view** with the same numbers (the FTP history's values are in the table below it).
 - **Light and dark themes** are designed separately (not inverted). They follow the OS by default; the header
   button cycles Auto / Light / Dark.

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { useHealth } from "./api/hooks";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { formatDay } from "./lib/dates";
 import { applyTheme, storedTheme, type ThemeChoice } from "./lib/theme";
 import { ActivitiesPage } from "./pages/ActivitiesPage";
@@ -33,6 +34,7 @@ function DataFreshness() {
 
 export function App() {
   const [theme, setTheme] = useState<ThemeChoice>(storedTheme);
+  const location = useLocation();
   const cycleTheme = () => {
     const next = THEME_NEXT[theme];
     applyTheme(next);
@@ -50,24 +52,28 @@ export function App() {
           ))}
         </nav>
         <div className="topbar-end">
-          <DataFreshness />
+          <span className="freshness">
+            <DataFreshness />
+          </span>
           <button type="button" className="btn ghost small" onClick={cycleTheme} title="Colour theme">
             Theme: {THEME_LABEL[theme]}
           </button>
         </div>
       </header>
       <main className="main">
-        <Routes>
-          <Route path="/" element={<Navigate to="/fitness" replace />} />
-          <Route path="/fitness" element={<FitnessPage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/activities" element={<ActivitiesPage />} />
-          <Route path="/activities/:source/:id" element={<ActivityPage />} />
-          <Route path="/power" element={<PowerCurvePage />} />
-          <Route path="/health" element={<HealthPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="*" element={<Navigate to="/fitness" replace />} />
-        </Routes>
+        <ErrorBoundary resetKey={location.pathname + location.search}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/fitness" replace />} />
+            <Route path="/fitness" element={<FitnessPage />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/activities" element={<ActivitiesPage />} />
+            <Route path="/activities/:source/:id" element={<ActivityPage />} />
+            <Route path="/power" element={<PowerCurvePage />} />
+            <Route path="/health" element={<HealthPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="*" element={<Navigate to="/fitness" replace />} />
+          </Routes>
+        </ErrorBoundary>
       </main>
     </div>
   );

@@ -77,6 +77,31 @@ it("explains how to start the API when it is unreachable", async () => {
   expect(screen.getByText(/serve-api/)).toBeInTheDocument();
 });
 
+it("treats the dev proxy's empty 500 as an unreachable API", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 500 })));
+  renderAt("/fitness");
+  expect(await screen.findByText("The fitness-hub API is not reachable")).toBeInTheDocument();
+});
+
+it("shows the API's own message for a 503", async () => {
+  const detail = "database schema version 4 is newer than this fitness-hub supports (3); upgrade fitness-hub";
+  vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ detail }), { status: 503 })));
+  renderAt("/fitness");
+  expect(await screen.findByText("Something went wrong")).toBeInTheDocument();
+  expect(screen.getByText(detail)).toBeInTheDocument();
+});
+
+it("falls back to the current month for an invalid ?month=", async () => {
+  mockApi({
+    "/health": health,
+    "/activities": () => [],
+    "/summary": (url) => ({ start_date: url.searchParams.get("start_date"), end_date: "", group_by: "week", periods: [] }),
+  });
+  renderAt("/calendar?month=2025-13");
+  const heading = await screen.findByRole("heading", { level: 1 });
+  expect(heading.textContent).toMatch(new RegExp(String(new Date().getFullYear())));
+});
+
 it("saves a manual FTP as JSON and reports the re-scoring", async () => {
   const calls = mockApi({
     "/health": health,

@@ -60,12 +60,13 @@ const fullFmt = new Intl.DateTimeFormat(undefined, {
   timeZone: "UTC",
 });
 const monthFmt = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric", timeZone: "UTC" });
-const shortMonthFmt = new Intl.DateTimeFormat(undefined, { month: "short", year: "2-digit", timeZone: "UTC" });
+const shortMonthFmt = new Intl.DateTimeFormat(undefined, { month: "short", timeZone: "UTC" });
 
 export const formatDay = (iso: ISODate) => dayFmt.format(parseISO(iso));
 export const formatFullDay = (iso: ISODate) => fullFmt.format(parseISO(iso));
 export const formatMonth = (iso: ISODate) => monthFmt.format(parseISO(iso));
-export const formatShortMonth = (iso: ISODate) => shortMonthFmt.format(parseISO(iso));
+/** "Oct '26": month and year without reading like a day of the month. */
+export const formatShortMonth = (iso: ISODate) => `${shortMonthFmt.format(parseISO(iso))} '${iso.slice(2, 4)}`;
 
 export interface RangePreset {
   id: string;
