@@ -31,6 +31,35 @@ npm run dev                                # http://127.0.0.1:5173
 The dev server proxies `/api` to `http://127.0.0.1:8801` (set `FITNESS_HUB_API` to change it), so the browser talks
 to a single origin. For a production build, `npm run build` then `npm run preview` serves `dist/` with the same proxy.
 
+### From other devices on your network
+
+Both services listen on this machine only by default. To use the UI from a phone or another computer on the same
+network, start both in LAN mode:
+
+```bash
+# terminal 1 (performance-tracker-backend)
+.venv/bin/fitness-hub serve-api --host 0.0.0.0   # or put API_HOST=0.0.0.0 in ~/.fitness-hub/.env
+
+# terminal 2: dev server, or a production build (faster on phones)
+npm run dev:lan                                   # http://<this machine's IP>:5173
+npm run build && npm run preview:lan              # http://<this machine's IP>:4173
+```
+
+Then open `http://<IP>:5173` on the other device; Vite prints the address under "Network". `http://<hostname>.local:5173`
+works too where mDNS does (avahi on this machine, and a client that resolves `.local`; some older Android versions
+do not). The API must be in LAN mode as well, because the proxy passes the browser's address on and the API refuses
+names it does not know. Other devices need only the UI port; the API on 8801 is reachable too, for scripts.
+
+- **There is no login.** Anyone on the network can see your training and health data and change your thresholds.
+  Use it on a home network you trust, not on public Wi-Fi.
+- Both servers answer only devices with a loopback, private (10/8, 172.16/12, 192.168/16, fc00::/7) or link-local
+  address, even if this machine also has a public IPv4 or IPv6 address.
+- If a firewall is on (Ubuntu: `sudo ufw status`), open the ports to your network only, for example
+  `sudo ufw allow from 192.168.1.0/24 to any port 5173,4173,8801 proto tcp`.
+- IP addresses, `localhost` and this machine's host name (bare and `.local`) work. For another name, such as a DNS
+  entry on your router, list it in both services, comma-separated:
+  `UI_ALLOWED_HOSTS=nas.home npm run dev:lan`, and `API_ALLOWED_HOSTS=nas.home` in the backend's `.env`.
+
 ## Development
 
 ```bash
