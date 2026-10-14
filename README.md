@@ -195,7 +195,7 @@ Then ask, for example:
 | `get_daily_metrics` | `{date, metric, source, value}` rows; default last 30 days. Sources are not merged |
 | `get_sleep` | Sleep sessions by wake-up date; default last 30 days, main sleep only |
 | `get_body_measurements` | Weight (kg) and body fat (%); default last 90 days |
-| `query_sql` | One read-only `SELECT`/`WITH` query (at most 1000 rows, 10 s). Writes, `PRAGMA`, `ATTACH` and multiple statements are rejected |
+| `query_sql` | One read-only `SELECT`/`WITH` query (at most 1000 rows, 1 MB per value, about 10 s; runs in a worker thread, so other tools stay responsive). Writes, `PRAGMA`, `ATTACH` and multiple statements are rejected |
 | `sync_now` | Runs a sync and returns its log. It blocks, and `full=true` can hit rate limits |
 
 Units: metres, seconds, bpm, watts, kcal, kg (summaries use km and hours). Timestamps are UTC, and dates are your local

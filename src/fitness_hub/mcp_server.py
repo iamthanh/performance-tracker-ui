@@ -7,7 +7,6 @@ and it only runs the normal provider sync.
 
 from __future__ import annotations
 
-import ipaddress
 import json
 import logging
 from collections.abc import Callable
@@ -68,20 +67,25 @@ def _dump(value: Any) -> str:
     return json.dumps(value, separators=(",", ":"), ensure_ascii=False, default=str)
 
 
+# FastMCP enables DNS-rebinding protection only for these exact hosts.
+LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
+
+
+def normalize_host(host: str) -> str:
+    return host.strip().strip("[]")
+
+
 def is_loopback(host: str) -> bool:
-    if host == "localhost":
-        return True
-    try:
-        return ipaddress.ip_address(host.strip("[]")).is_loopback
-    except ValueError:
-        return False
+    """True only for the loopback hosts FastMCP protects against DNS rebinding."""
+    return normalize_host(host) in LOOPBACK_HOSTS
 
 
 def check_http_host(host: str) -> None:
     if not is_loopback(host):
         raise ValueError(
             f"refusing to serve over HTTP on {host!r}: the HTTP transport has no authentication and "
-            "would expose your health data. Use 127.0.0.1/localhost (remote access is future work)."
+            f"would expose your health data. Use one of {', '.join(LOOPBACK_HOSTS)} "
+            "(remote access is future work)."
         )
 
 
@@ -94,17 +98,22 @@ def create_server(
     settings = settings or Settings.from_env()
     mcp = FastMCP("fitness-hub", instructions=INSTRUCTIONS, host=host, port=port, log_level=log_level)
 
-    def read(fn: Callable[[Any], T]) -> T:
+    def read_sync(fn: Callable[[Any], T]) -> T:
         with closing(open_readonly(settings.db_path)) as conn:
             return fn(conn)
 
-    @mcp.tool(annotations=READ_ONLY, structured_output=False)
-    def sync_status() -> str:
-        """Row counts per table and, per source/stream, the last attempt, last success, cursor and last error."""
-        return _dump(read(queries.sync_status))
+    async def read(fn: Callable[[Any], T]) -> T:
+        # A worker thread keeps the event loop (and every other tool) responsive
+        # while a slow query runs; the connection lives entirely in that thread.
+        return await anyio.to_thread.run_sync(read_sync, fn)
 
     @mcp.tool(annotations=READ_ONLY, structured_output=False)
-    def list_activities(
+    async def sync_status() -> str:
+        """Row counts per table and, per source/stream, the last attempt, last success, cursor and last error."""
+        return _dump(await read(queries.sync_status))
+
+    @mcp.tool(annotations=READ_ONLY, structured_output=False)
+    async def list_activities(
         start_date: DateArg = None,
         end_date: DateArg = None,
         activity_type: Annotated[
@@ -114,20 +123,20 @@ def create_server(
         limit: Annotated[int, Field(ge=1, le=500, description="Max activities (newest first)")] = 50,
     ) -> str:
         """List workouts newest first. Duplicates across services are merged unless `source` is set."""
-        rows = read(lambda c: queries.list_activities(c, start_date, end_date, activity_type, source, limit))
+        rows = await read(lambda c: queries.list_activities(c, start_date, end_date, activity_type, source, limit))
         return _dump({"count": len(rows), "activities": rows})
 
     @mcp.tool(annotations=READ_ONLY, structured_output=False)
-    def get_activity(
+    async def get_activity(
         source: Annotated[str, Field(description="Source of the activity, e.g. strava")],
         source_id: Annotated[str, Field(description="The activity id within that source")],
         include_raw: Annotated[bool, Field(description="Include the full provider JSON payload")] = False,
     ) -> str:
         """One activity by (source, source_id), or null if it does not exist."""
-        return _dump(read(lambda c: queries.get_activity(c, source, source_id, include_raw)))
+        return _dump(await read(lambda c: queries.get_activity(c, source, source_id, include_raw)))
 
     @mcp.tool(annotations=READ_ONLY, structured_output=False)
-    def activity_summary(
+    async def activity_summary(
         start_date: Annotated[str, Field(description="YYYY-MM-DD, inclusive")],
         end_date: Annotated[str, Field(description="YYYY-MM-DD, inclusive")],
         group_by: Annotated[
@@ -138,10 +147,10 @@ def create_server(
     ) -> str:
         """Totals per period or sport: count, distance_km, moving_hours, elevation_gain_m, calories,
         avg_of_avg_hr. De-duplicated across services, so a workout is never counted twice."""
-        return _dump(read(lambda c: queries.activity_summary(c, start_date, end_date, group_by, activity_type)))
+        return _dump(await read(lambda c: queries.activity_summary(c, start_date, end_date, group_by, activity_type)))
 
     @mcp.tool(annotations=READ_ONLY, structured_output=False)
-    def get_daily_metrics(
+    async def get_daily_metrics(
         start_date: Annotated[str | None, Field(description="YYYY-MM-DD; default 30 days before end_date")] = None,
         end_date: DateArg = None,
         metrics: Annotated[
@@ -150,38 +159,38 @@ def create_server(
         source: SourceArg = None,
     ) -> str:
         """Daily health metrics as rows {date, metric, source, value}. Sources are not merged."""
-        rows = read(lambda c: queries.daily_metrics(c, start_date, end_date, metrics, source))
+        rows = await read(lambda c: queries.daily_metrics(c, start_date, end_date, metrics, source))
         return _dump({"count": len(rows), "rows": rows})
 
     @mcp.tool(annotations=READ_ONLY, structured_output=False)
-    def get_sleep(
+    async def get_sleep(
         start_date: Annotated[str | None, Field(description="YYYY-MM-DD; default 30 days before end_date")] = None,
         end_date: DateArg = None,
         main_only: Annotated[bool, Field(description="Only the main sleep of each night (exclude naps)")] = True,
         source: SourceArg = None,
     ) -> str:
         """Sleep sessions (minutes asleep/awake/deep/light/REM) by the local date the sleep ended."""
-        rows = read(lambda c: queries.sleep_sessions(c, start_date, end_date, main_only, source))
+        rows = await read(lambda c: queries.sleep_sessions(c, start_date, end_date, main_only, source))
         return _dump({"count": len(rows), "sessions": rows})
 
     @mcp.tool(annotations=READ_ONLY, structured_output=False)
-    def get_body_measurements(
+    async def get_body_measurements(
         start_date: Annotated[str | None, Field(description="YYYY-MM-DD; default 90 days before end_date")] = None,
         end_date: DateArg = None,
         metric: Annotated[str | None, Field(description=f"One of: {', '.join(BODY_METRICS)}")] = None,
     ) -> str:
         """Weight (kg) and body fat (%) samples with UTC timestamps."""
-        rows = read(lambda c: queries.body_measurements(c, start_date, end_date, metric))
+        rows = await read(lambda c: queries.body_measurements(c, start_date, end_date, metric))
         return _dump({"count": len(rows), "rows": rows})
 
     @mcp.tool(annotations=READ_ONLY, structured_output=False)
-    def query_sql(
+    async def query_sql(
         sql: Annotated[str, Field(description="A single SELECT or WITH query (SQLite dialect)")],
         limit: Annotated[int, Field(ge=1, le=1000, description="Max rows returned")] = 200,
     ) -> str:
         """Run one read-only SQL query against the local database. Returns {columns, rows, truncated}.
         Writes, PRAGMA, ATTACH and multiple statements are rejected. Not de-duplicated."""
-        return _dump(read(lambda c: queries.run_select(c, sql, limit)))
+        return _dump(await read(lambda c: queries.run_select(c, sql, limit)))
 
     @mcp.tool(annotations=SYNC, structured_output=False)
     async def sync_now(
@@ -216,7 +225,7 @@ def serve(settings: Settings, transport: str = "stdio", host: str = "127.0.0.1",
         host,
         port,
     )
-    create_server(settings, host=host, port=port).run("streamable-http")
+    create_server(settings, host=normalize_host(host), port=port).run("streamable-http")
 
 
 if __name__ == "__main__":

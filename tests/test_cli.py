@@ -40,6 +40,15 @@ def test_status_on_fresh_home(home: Path, capsys) -> None:
     assert "activities=0" in out and "No syncs recorded yet" in out
 
 
+def test_status_survives_corrupt_tokens_file(home: Path, capsys) -> None:
+    home.mkdir(parents=True)
+    (home / "tokens.json").write_text("{not json")
+    code, out, _ = run_cli(capsys, "status")
+    assert code == 0
+    assert "strava         error:" in out and "corrupt" in out
+    assert "garmin         not authorized" in out
+
+
 def test_sync_with_nothing_authorized_exits_zero(home: Path, capsys) -> None:
     code, out, _ = run_cli(capsys, "sync")
     assert code == 0

@@ -114,7 +114,10 @@ def cmd_status(settings: Settings, args: argparse.Namespace) -> int:
     print(f"Database: {settings.db_path}")
     providers = build_providers(settings)
     for name in PROVIDER_NAMES:
-        state = "authorized" if providers[name].configured() else "not authorized"
+        try:
+            state = "authorized" if providers[name].configured() else "not authorized"
+        except Exception as exc:  # noqa: BLE001 - e.g. a corrupt tokens.json; show it, keep going
+            state = f"error: {exc}"
         print(f"  {name:<14} {state}")
     with closing(open_readonly(settings.db_path)) as conn:
         counts = row_counts(conn)

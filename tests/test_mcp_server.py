@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import get_default_environment, stdio_client
 from mcp.shared.memory import create_connected_server_and_client_session
 
+from fitness_hub import queries
 from fitness_hub.config import Settings
 from fitness_hub.db import Store
 from fitness_hub.mcp_server import create_server, is_loopback, serve
@@ -146,6 +148,35 @@ def test_query_sql_reads(seeded: Settings) -> None:
     assert body == {"columns": ["source", "id"], "rows": [["garmin", "g1"], ["strava", "s1"]], "truncated": True}
 
 
+def test_slow_query_does_not_block_other_tools(seeded: Settings, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(queries, "SQL_TIMEOUT_S", 3.0)
+    endless = "WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c) SELECT COUNT(*) FROM c"
+
+    async def run() -> dict:
+        server = create_server(seeded)
+        async with create_connected_server_and_client_session(server._mcp_server) as client:
+            started = time.monotonic()
+            seen: dict = {}
+
+            async def slow() -> None:
+                result = await client.call_tool("query_sql", {"sql": endless})
+                seen["slow"] = (time.monotonic() - started, result.isError)
+
+            async def fast() -> None:
+                await anyio.sleep(0.3)
+                result = await client.call_tool("sync_status", {})
+                seen["fast"] = (time.monotonic() - started, result.isError)
+
+            async with anyio.create_task_group() as tg:
+                tg.start_soon(slow)
+                tg.start_soon(fast)
+            return seen
+
+    seen = anyio.run(run)
+    assert seen["fast"][0] < 2.0 and not seen["fast"][1]  # answered while the query was still running
+    assert seen["slow"][0] >= 2.9 and seen["slow"][1]  # stopped by the time limit, as a tool error
+
+
 def test_sync_now_with_nothing_authorized(seeded: Settings) -> None:
     error, body = call(seeded, "sync_now", {"sources": ["strava"]})
     assert not error
@@ -163,8 +194,10 @@ def test_tools_work_on_a_fresh_home(settings: Settings) -> None:
 
 
 def test_http_transport_is_loopback_only(settings: Settings) -> None:
-    assert is_loopback("127.0.0.1") and is_loopback("localhost") and is_loopback("::1")
+    assert is_loopback("127.0.0.1") and is_loopback("localhost") and is_loopback("::1") and is_loopback("[::1]")
     assert not is_loopback("0.0.0.0") and not is_loopback("192.168.1.5")
+    # loopback, but FastMCP would not enable DNS-rebinding protection for it
+    assert not is_loopback("127.0.0.2")
     with pytest.raises(ValueError, match="no authentication"):
         serve(settings, transport="http", host="0.0.0.0")
 
