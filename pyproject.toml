@@ -8,7 +8,6 @@ version = "0.1.0"
 description = "fitness-hub app: CLI and MCP server that give Claude read access to your local Strava, Garmin and Google Health data."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
 dependencies = [
     # Versioned together with the core library (repo: performance-tracker-backend).
     "fitness-hub-core~=0.1.0",

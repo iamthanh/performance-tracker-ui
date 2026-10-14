@@ -202,8 +202,8 @@ def _stdio_roundtrip(home: Path, args: list[str]) -> dict:
 
 @pytest.mark.parametrize(
     "args",
-    [["-m", "fitness_hub.mcp_server"]],
-    ids=["module"],
+    [["-m", "fitness_hub.mcp_server"], ["-m", "fitness_hub.cli", "serve-mcp"], ["-m", "fitness_hub", "serve-mcp"]],
+    ids=["module", "cli", "package"],
 )
 def test_stdio_subprocess(seeded: Settings, args: list[str]) -> None:
     out = _stdio_roundtrip(seeded.home, args)
