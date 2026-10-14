@@ -45,17 +45,20 @@ npm run dev:lan                                   # http://<this machine's IP>:5
 npm run build && npm run preview:lan              # http://<this machine's IP>:4173
 ```
 
-Then open `http://<IP>:5173` (or `http://<hostname>.local:5173`) on the other device; Vite prints the
-addresses. The API must be in LAN mode as well, because the proxy passes the browser's address on and the API
-refuses names it does not know. Other devices need only the UI port; the API on 8801 is reachable too, for scripts.
+Then open `http://<IP>:5173` on the other device; Vite prints the address under "Network". `http://<hostname>.local:5173`
+works too where mDNS does (avahi on this machine, and a client that resolves `.local`; some older Android versions
+do not). The API must be in LAN mode as well, because the proxy passes the browser's address on and the API refuses
+names it does not know. Other devices need only the UI port; the API on 8801 is reachable too, for scripts.
 
 - **There is no login.** Anyone on the network can see your training and health data and change your thresholds.
   Use it on a home network you trust, not on public Wi-Fi.
+- Both servers answer only devices with a loopback, private (10/8, 172.16/12, 192.168/16, fc00::/7) or link-local
+  address, even if this machine also has a public IPv4 or IPv6 address.
 - If a firewall is on (Ubuntu: `sudo ufw status`), open the ports to your network only, for example
   `sudo ufw allow from 192.168.1.0/24 to any port 5173,4173,8801 proto tcp`.
 - IP addresses, `localhost` and this machine's host name (bare and `.local`) work. For another name, such as a DNS
-  entry on your router, add it to `UI_ALLOWED_HOSTS` here and to `API_ALLOWED_HOSTS` in the backend
-  (comma-separated).
+  entry on your router, list it in both services, comma-separated:
+  `UI_ALLOWED_HOSTS=nas.home npm run dev:lan`, and `API_ALLOWED_HOSTS=nas.home` in the backend's `.env`.
 
 ## Development
 
