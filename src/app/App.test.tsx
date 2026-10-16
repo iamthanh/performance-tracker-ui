@@ -85,3 +85,74 @@ it("saves a manual FTP as JSON and reports the re-scoring", async () => {
   });
   await waitFor(() => expect(calls.filter((c) => c.url.pathname === "/api/thresholds").length).toBeGreaterThan(2));
 });
+
+const activity = (id: string, name: string, tss: number | null) => ({
+  source: "strava",
+  source_id: id,
+  start_time: `2026-10-0${id}T08:00:00Z`,
+  local_date: `2026-10-0${id}`,
+  sport: "cycling",
+  name,
+  tss,
+  intensity_factor: null,
+  normalized_power_w: null,
+  moving_s: 3600,
+  timer_s: 3600,
+  distance_m: 30000,
+  avg_hr: null,
+  decoupling_pct: null,
+  tss_method: "power",
+  has_streams: true,
+});
+
+it("sorts activities by a column, and flips on a second click", async () => {
+  mockApi({ "/health": health, "/activities": () => [activity("1", "Easy", 40), activity("2", "Hard", 95)] });
+  renderAt("/activities");
+  await screen.findByText("Easy");
+  const names = () => screen.getAllByRole("row").slice(1).map((r) => r.textContent ?? "");
+  expect(names()[0]).toMatch(/Hard/); // newest first
+  const tss = screen.getByRole("button", { name: "TSS" });
+  fireEvent.click(tss);
+  expect(tss.closest("th")).toHaveAttribute("aria-sort", "descending");
+  expect(names()[0]).toMatch(/Hard/);
+  fireEvent.click(screen.getByRole("button", { name: /^TSS/ }));
+  expect(screen.getByRole("button", { name: /^TSS/ }).closest("th")).toHaveAttribute("aria-sort", "ascending");
+  expect(names()[0]).toMatch(/Easy/);
+});
+
+it("opens a workout from the activities table with the keyboard", async () => {
+  mockApi({
+    "/health": health,
+    "/activities": () => [activity("1", "Easy", 40)],
+  });
+  renderAt("/activities");
+  const row = (await screen.findByText("Easy")).closest("tr")!;
+  fireEvent.keyDown(row, { key: "Enter" });
+  // The detail page asks the API for this workout (404 here), which shows its error.
+  expect(await screen.findByText("Something went wrong")).toBeInTheDocument();
+  expect(screen.getByText("not found")).toBeInTheDocument();
+});
+
+it("removes a manual threshold only after confirmation", async () => {
+  const thresholds = {
+    values: [{ metric: "ftp_w", effective_date: "2026-09-02", origin: "manual", value: 245, note: null }],
+    on: today(),
+    in_effect: { ftp_w: 245, threshold_hr: 168, max_hr: 176, resting_hr: null },
+  };
+  const calls = mockApi({
+    "/health": health,
+    "/thresholds": () => thresholds,
+    "/thresholds/ftp_w/2026-09-02": () => ({ analysis: { analysed: 0, rescored: 7, ftp_changes: 1, threshold_hr_changes: 0 } }),
+  });
+  const confirm = vi.fn(() => false);
+  vi.stubGlobal("confirm", confirm);
+  renderAt("/settings");
+  fireEvent.click(await screen.findByRole("button", { name: "Remove" }));
+  expect(confirm).toHaveBeenCalledWith(expect.stringMatching(/^Remove your FTP 245 W from .*\? Workouts from that date will be re-scored\.$/));
+  expect(calls.some((c) => c.init?.method === "DELETE")).toBe(false);
+
+  confirm.mockReturnValue(true);
+  fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+  expect(await screen.findByText("Removed. 7 workouts re-scored.")).toBeInTheDocument();
+  expect(calls.some((c) => c.init?.method === "DELETE" && c.url.pathname === "/api/thresholds/ftp_w/2026-09-02")).toBe(true);
+});

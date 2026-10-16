@@ -6,7 +6,8 @@ import { num } from "@/lib/format";
 import type { Token } from "@/lib/theme";
 
 import { axisProps, CHART_MARGIN, gridProps, lineCursor, Y_AXIS_WIDTH } from "./chartProps";
-import { tooltipContent, TooltipBox } from "./ChartTooltip";
+import { TooltipBox } from "./ChartTooltip";
+import { tooltipContent } from "./tooltipContent";
 
 /** One value per day as a line (with dots while there are few), e.g. resting heart rate or weight. */
 export function DailyLineChart({

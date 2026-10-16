@@ -2,7 +2,7 @@ import { StatTile } from "@/components";
 import type { DatedValue, ISODate } from "@/lib/dates";
 import { hoursMinutes, num } from "@/lib/format";
 
-import type { Night } from "../hooks/useHealthData";
+import type { Night } from "../lib/types";
 import { average, weekOverWeek } from "../lib/series";
 
 /** Last 7 days' averages of each marker, and the latest weight. */

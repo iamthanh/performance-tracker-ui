@@ -7,7 +7,7 @@ export type ChannelSpec = { key: Channel; label: string; unit: string; token: To
 export type StreamRow = Record<string, number | null>;
 
 // Each channel is its own chart (different units never share an axis); identity colour is fixed per channel.
-export const CHANNELS: ChannelSpec[] = [
+const CHANNELS: ChannelSpec[] = [
   { key: "power", label: "Power", unit: "W", token: "series-1", digits: 0 },
   { key: "heart_rate", label: "Heart rate", unit: "bpm", token: "series-8", digits: 0 },
   { key: "cadence", label: "Cadence", unit: "rpm", token: "series-3", digits: 0 },

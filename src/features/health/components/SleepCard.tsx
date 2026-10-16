@@ -17,7 +17,7 @@ import { formatDay, formatFullDay } from "@/lib/dates";
 import { hoursMinutes } from "@/lib/format";
 import type { Token } from "@/lib/theme";
 
-import type { Night } from "../hooks/useHealthData";
+import type { Night } from "../lib/types";
 
 /** Sleep stages bottom to top; awake is the cap with the rounded corners. */
 const STAGES: { key: "deep" | "light" | "rem" | "awake"; label: string; token: Token }[] = [

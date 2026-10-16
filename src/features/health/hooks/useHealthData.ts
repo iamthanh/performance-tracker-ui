@@ -3,9 +3,7 @@ import { useMemo } from "react";
 import { useBody, useDailyMetrics, useSleep, useTrainingLoad } from "@/api";
 
 import { metricSeries, onePerDay } from "../lib/series";
-
-/** A night's sleep in hours per stage (`asleep` in minutes, as the API reports it). */
-export type Night = { date: string; deep: number; light: number; rem: number; awake: number; asleep: number | null };
+import type { Night } from "../lib/types";
 
 /** Every health series over a date range, one value per day. */
 export function useHealthData(range: { start: string; end: string }) {

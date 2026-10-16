@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 
-import { NAV_ITEMS } from "../routes";
+import { NAV_ITEMS } from "../nav";
 import { DataFreshness } from "./DataFreshness";
 import { ThemeToggle } from "./ThemeToggle";
 

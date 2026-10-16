@@ -7,10 +7,12 @@ import { ThresholdForm } from "./components/ThresholdForm";
 import { ThresholdTiles } from "./components/ThresholdTiles";
 import { ThresholdValuesCard } from "./components/ThresholdValuesCard";
 import { useThresholdEditor } from "./hooks/useThresholdEditor";
+import { useThresholdForm } from "./hooks/useThresholdForm";
 
 /** The thresholds behind TSS, intensity and zones: what is in effect, its history, and overrides. */
 export function SettingsPage() {
   const thresholds = useThresholds(today());
+  const form = useThresholdForm();
   const editor = useThresholdEditor();
 
   if (thresholds.isError) return <ErrorCard error={thresholds.error} />;
@@ -24,7 +26,7 @@ export function SettingsPage() {
         description="Thresholds behind TSS, intensity and zones. Automatic values follow your best efforts; your own values override them from their date on."
       />
       <ThresholdTiles inEffect={thresholds.data.in_effect} />
-      <ThresholdForm editor={editor} />
+      <ThresholdForm form={form} editor={editor} />
       <FtpHistoryCard values={values} />
       <ThresholdValuesCard values={values} editor={editor} />
     </>

@@ -7,8 +7,8 @@ import { formatFullDay } from "@/lib/dates";
 import { duration, isNum, num, pct, sportLabel } from "@/lib/format";
 import { activityPath } from "@/lib/paths";
 
-import type { Sort, SortKey } from "../lib/sorting";
-import { ariaSort, SortButton } from "./SortButton";
+import { ariaSort, type Sort, type SortKey } from "../lib/sorting";
+import { SortButton } from "./SortButton";
 
 /** The sortable metric columns, in display order. */
 const METRIC_COLUMNS: { key: Exclude<SortKey, "local_date">; label: string; cell: (a: ActivityRow) => ReactNode }[] = [

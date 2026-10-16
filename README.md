@@ -80,23 +80,24 @@ Run `npm run build && npm test` before pushing; CI for this repo is not set up y
 ```
 src/
   main.tsx            entry: global styles, providers, <App/>
-  app/                the shell: App (top bar + current page), routes.tsx (routes and nav), layout/, queryClient
-  features/<page>/    one folder per page (fitness, calendar, activities, activity, power-curve, health, settings)
-    <Name>Page.tsx    composes the page from its components; no data plumbing or formatting of its own
-    components/       pieces used only by this page
-    hooks/            the page's data and state (wrapping api/ queries)
-    lib/              the page's pure logic, with tests next to it
+  app/                the shell: App (top bar + current page), routes.tsx, nav.ts, layout/, queryClient
+  features/<page>/    one folder per page: fitness, calendar, activities (the list), activity-detail (one
+                      workout), power-curve, health, settings
+    <Name>Page.tsx    lays out the page from its components; holds only state shared between them
+    components/       pieces of this page
+    hooks/            the page's data (wrapping api/ queries) and form or view state
+    lib/              the page's pure logic and types, with tests beside them
     index.ts          exports the page, nothing else
-  components/         shared building blocks, imported from "@/components"
+  components/         generic building blocks (no knowledge of any page), imported from "@/components"
     charts/           ChartCard, TooltipBox + tooltipContent, DailyLineChart, Legend, shared axis/grid props
     controls/         Segmented, RangePresetPicker, Field
     data/             StatTile, DataTable, Badge
     feedback/         Loading / ErrorState / Empty, their *Card versions, ErrorBoundary
     layout/           PageHeader, Card + CardHeader
-  hooks/              shared hooks: useColors (chart colours), useRangePreset, useThemeChoice
+  hooks/              generic hooks: useColors (chart colours), useRangePreset, useThemeChoice
   api/                http.ts (fetch + errors), endpoints.ts (one function per endpoint), queries.ts (TanStack
                       Query hooks and query keys), types.ts (response shapes)
-  lib/                pure helpers: dates, format, training (threshold rules), paths (in-app URLs), theme
+  lib/                generic pure helpers: dates, format, training (threshold rules), paths (in-app URLs), theme
   styles/             global CSS in cascade order (index.css imports the rest); page CSS lives with its page
   test/               test setup and helpers (mockApi, renderAt)
 ```
@@ -104,18 +105,23 @@ src/
 Conventions:
 
 - **Imports** use `@/` for `src/` (`import { ChartCard } from "@/components"`), and relative paths within a feature.
-- **Data** is read only through the hooks in `api/queries.ts`; nothing else calls `fetch`. Query keys are defined once
-  in `queryKeys`.
-- **Shared or not:** a component, hook or helper used by one page lives in that page's folder. When a second page
-  needs it, it moves to `components/`, `hooks/` or `lib/`, and stops knowing about either page.
-- **Logic is pure and tested:** sorting, grouping, series and projections live in `lib/` folders as plain functions
-  with `*.test.ts` files beside them; components only render.
+  Features never import from each other.
+- **Data** is read only through the hooks in `api/queries.ts` (the `@/api` barrel does not export the raw
+  endpoints). Query keys are defined once, in `queryKeys`.
+- **Where code goes:** something that knows about one page lives in that page's folder. Something generic (a line
+  chart of daily values, a date formatter) goes in the shared `components/`, `hooks/` or `lib/`, even if one page
+  uses it so far; it must not know about any page.
+- **Logic is pure and tested:** sorting, grouping, series, zones and projections are plain functions in `lib/`
+  folders with `*.test.ts` files beside them. `app/App.test.tsx` covers pages end to end with a mocked API.
 - **Charts** take their colours from `useColors()` (theme tokens, never literal colours) and their frame from
   `axisProps`, `gridProps`, `CHART_MARGIN` and `lineCursor`/`barCursor`. Every data chart sits in a `ChartCard` with
   a `table` twin.
+- **Files are named after the component they export** (small families share one: `Card` + `CardHeader`, the state
+  cards); a file that exports components exports nothing else (for fast refresh), so helpers live in `.ts` files.
 
-To add a page: create `features/<name>/` with `<Name>Page.tsx` and an `index.ts` exporting it, add its route and nav
-entry in `app/routes.tsx`, and add its endpoint (if new) to `api/endpoints.ts`, `api/queries.ts` and `api/types.ts`.
+To add a page: create `features/<name>/` with `<Name>Page.tsx` and an `index.ts` exporting it, add its route in
+`app/routes.tsx` and its nav entry in `app/nav.ts`, and add its endpoint (if new) to `api/endpoints.ts`,
+`api/queries.ts` and `api/types.ts`.
 
 ### Charts
 

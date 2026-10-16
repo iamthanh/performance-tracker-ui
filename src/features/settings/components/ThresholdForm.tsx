@@ -1,25 +1,19 @@
-import { useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
 
 import type { ThresholdMetric } from "@/api";
 import { Card, CardHeader, Field } from "@/components";
-import { today } from "@/lib/dates";
 
 import type { ThresholdEditor } from "../hooks/useThresholdEditor";
+import type { ThresholdFormState } from "../hooks/useThresholdForm";
 import { metricInfo, THRESHOLD_METRICS } from "../lib/thresholdMetrics";
 
 /** Set a threshold from a date on; shows the outcome of the last save or removal. */
-export function ThresholdForm({ editor }: { editor: ThresholdEditor }) {
-  const [metric, setMetric] = useState<ThresholdMetric>("ftp_w");
-  const [date, setDate] = useState(today());
-  const [value, setValue] = useState("");
-  const [note, setNote] = useState("");
+export function ThresholdForm({ form, editor }: { form: ThresholdFormState; editor: ThresholdEditor }) {
+  const { metric, setMetric, date, setDate, value, setValue, note, setNote } = form;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    editor.save({ metric, effective_date: date, value: Number(value), note: note || undefined }, () => {
-      setValue("");
-      setNote("");
-    });
+    editor.save(form.input(), form.clear);
   };
 
   return (

@@ -19,8 +19,3 @@ export function SortButton({
     </button>
   );
 }
-
-/** `aria-sort` for a column header. */
-export function ariaSort(sort: Sort, column: SortKey): "ascending" | "descending" | "none" {
-  return sort.key === column ? (sort.desc ? "descending" : "ascending") : "none";
-}
