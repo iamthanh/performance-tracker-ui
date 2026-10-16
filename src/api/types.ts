@@ -139,11 +139,18 @@ export interface Totals {
   unscored: number;
 }
 
+export interface SummaryPeriod {
+  /** First day of the day/week/month. */
+  period: string;
+  total: Totals;
+  by_sport: Record<string, Totals>;
+}
+
 export interface Summary {
   start_date: string;
   end_date: string;
   group_by: "day" | "week" | "month";
-  periods: { period: string; total: Totals; by_sport: Record<string, Totals> }[];
+  periods: SummaryPeriod[];
 }
 
 export interface LoadDay {

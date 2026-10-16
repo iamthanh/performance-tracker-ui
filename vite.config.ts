@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 import { hostname } from "node:os";
+import { fileURLToPath } from "node:url";
 
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
@@ -26,6 +27,10 @@ const ALLOWED_HOSTS = [
 
 export default defineConfig({
   plugins: [react(), localNetworkOnly()],
+  resolve: {
+    // `@/` is `src/`: imports read the same from any depth (see tsconfig.json "paths").
+    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
+  },
   server: {
     host: "127.0.0.1",
     port: 5173,
@@ -50,6 +55,6 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    setupFiles: ["src/test-setup.ts"],
+    setupFiles: ["src/test/setup.ts"],
   },
 });

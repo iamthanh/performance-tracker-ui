@@ -64,7 +64,7 @@ names it does not know. Other devices need only the UI port; the API on 8801 is 
 
 ```bash
 npm run typecheck    # tsc
-npm test             # vitest: formatting, dates, threshold rules, page rendering with a mocked API
+npm test             # vitest: pure logic (lib/ folders) and page rendering with a mocked API
 npm run build        # typecheck + production build
 ```
 
@@ -72,10 +72,50 @@ Run `npm run build && npm test` before pushing; CI for this repo is not set up y
 
 - **Stack:** React 18, TypeScript, Vite, React Router, TanStack Query (requests, caching, keeping the last render
   while a filter change loads) and Recharts.
-- **Layout:** `src/api` (types, client, query hooks), `src/lib` (dates, formatting, training rules, theme),
-  `src/components`, `src/pages`.
 - **Threshold rules:** `src/lib/training.ts` mirrors the backend's rule for which FTP or threshold HR is in effect on
   a date (`analysis.Timeline`), and its tests use the same cases as the backend's.
+
+### Project structure
+
+```
+src/
+  main.tsx            entry: global styles, providers, <App/>
+  app/                the shell: App (top bar + current page), routes.tsx (routes and nav), layout/, queryClient
+  features/<page>/    one folder per page (fitness, calendar, activities, activity, power-curve, health, settings)
+    <Name>Page.tsx    composes the page from its components; no data plumbing or formatting of its own
+    components/       pieces used only by this page
+    hooks/            the page's data and state (wrapping api/ queries)
+    lib/              the page's pure logic, with tests next to it
+    index.ts          exports the page, nothing else
+  components/         shared building blocks, imported from "@/components"
+    charts/           ChartCard, TooltipBox + tooltipContent, DailyLineChart, Legend, shared axis/grid props
+    controls/         Segmented, RangePresetPicker, Field
+    data/             StatTile, DataTable, Badge
+    feedback/         Loading / ErrorState / Empty, their *Card versions, ErrorBoundary
+    layout/           PageHeader, Card + CardHeader
+  hooks/              shared hooks: useColors (chart colours), useRangePreset, useThemeChoice
+  api/                http.ts (fetch + errors), endpoints.ts (one function per endpoint), queries.ts (TanStack
+                      Query hooks and query keys), types.ts (response shapes)
+  lib/                pure helpers: dates, format, training (threshold rules), paths (in-app URLs), theme
+  styles/             global CSS in cascade order (index.css imports the rest); page CSS lives with its page
+  test/               test setup and helpers (mockApi, renderAt)
+```
+
+Conventions:
+
+- **Imports** use `@/` for `src/` (`import { ChartCard } from "@/components"`), and relative paths within a feature.
+- **Data** is read only through the hooks in `api/queries.ts`; nothing else calls `fetch`. Query keys are defined once
+  in `queryKeys`.
+- **Shared or not:** a component, hook or helper used by one page lives in that page's folder. When a second page
+  needs it, it moves to `components/`, `hooks/` or `lib/`, and stops knowing about either page.
+- **Logic is pure and tested:** sorting, grouping, series and projections live in `lib/` folders as plain functions
+  with `*.test.ts` files beside them; components only render.
+- **Charts** take their colours from `useColors()` (theme tokens, never literal colours) and their frame from
+  `axisProps`, `gridProps`, `CHART_MARGIN` and `lineCursor`/`barCursor`. Every data chart sits in a `ChartCard` with
+  a `table` twin.
+
+To add a page: create `features/<name>/` with `<Name>Page.tsx` and an `index.ts` exporting it, add its route and nav
+entry in `app/routes.tsx`, and add its endpoint (if new) to `api/endpoints.ts`, `api/queries.ts` and `api/types.ts`.
 
 ### Charts
 

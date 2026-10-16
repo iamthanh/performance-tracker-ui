@@ -1,0 +1,26 @@
+/* -- states ------------------------------------------------------------------------------ */
+
+.state {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+.state strong {
+  display: block;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.state code {
+  background: var(--surface-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.state.error strong::before {
+  content: "⚠ ";
+  color: var(--status-critical);
+}
+
+.refetching {
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
