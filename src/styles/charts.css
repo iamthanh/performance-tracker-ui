@@ -1,0 +1,110 @@
+/* -- charts -------------------------------------------------------------------------------- */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.key-line {
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  display: inline-block;
+}
+.key-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.key-rect {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.chart-tooltip {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  font-size: 12px;
+  min-width: 150px;
+}
+.chart-tooltip .title {
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.chart-tooltip .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+.chart-tooltip .row .name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+.chart-tooltip .row strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.recharts-cartesian-axis-tick-value {
+  font-variant-numeric: tabular-nums;
+}
+/* Recharts makes each chart a keyboard stop (arrow keys move the tooltip): show focus for keyboards only. */
+.recharts-wrapper:focus:not(:focus-visible),
+.recharts-surface:focus:not(:focus-visible) {
+  outline: none;
+}
+.recharts-surface:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.readout > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stream-chart + .stream-chart {
+  margin-top: 4px;
+}
+.stream-label {
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--text-secondary);
+  margin: 0 0 0 4px;
+}

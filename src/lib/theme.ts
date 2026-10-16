@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+// Colour tokens and the light/dark choice. The tokens themselves are defined in styles/tokens.css;
+// charts (SVG attributes) read their resolved values through hooks/useColors.
 
 const TOKENS = [
   "surface-1",
@@ -22,9 +23,13 @@ export type Token = (typeof TOKENS)[number];
 export type Colors = Record<Token, string>;
 
 export type ThemeChoice = "system" | "light" | "dark";
-const STORAGE_KEY = "pt-theme";
 
-function readColors(): Colors {
+/** localStorage key; index.html reads it too, to apply the theme before first paint. */
+const STORAGE_KEY = "pt-theme";
+/** Window event fired after the theme changes. */
+export const THEME_CHANGE_EVENT = "pt-theme";
+
+export function readColors(): Colors {
   const style = getComputedStyle(document.documentElement);
   return Object.fromEntries(TOKENS.map((t) => [t, style.getPropertyValue(`--${t}`).trim() || "#888"])) as Colors;
 }
@@ -47,35 +52,5 @@ export function applyTheme(choice: ThemeChoice): void {
   } catch {
     // storage unavailable (private mode): the choice lasts for this page only
   }
-  window.dispatchEvent(new Event("pt-theme"));
-}
-
-/** Resolved token colours for SVG attributes (Recharts), refreshed when the theme changes. */
-export function useColors(): Colors {
-  const [colors, setColors] = useState<Colors>(readColors);
-  useEffect(() => {
-    const update = () => setColors(readColors());
-    const media = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-color-scheme: dark)") : null;
-    media?.addEventListener("change", update);
-    window.addEventListener("pt-theme", update);
-    return () => {
-      media?.removeEventListener("change", update);
-      window.removeEventListener("pt-theme", update);
-    };
-  }, []);
-  return colors;
-}
-
-/** Shared axis/grid props: hairline, solid, recessive. */
-export function axisProps(c: Colors) {
-  return {
-    stroke: c.axis,
-    tick: { fill: c["text-muted"], fontSize: 11 },
-    tickLine: false,
-    axisLine: { stroke: c.axis },
-  } as const;
-}
-
-export function gridProps(c: Colors) {
-  return { stroke: c.grid, strokeDasharray: undefined, vertical: false } as const;
+  window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
 }

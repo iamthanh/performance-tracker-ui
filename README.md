@@ -64,7 +64,7 @@ names it does not know. Other devices need only the UI port; the API on 8801 is 
 
 ```bash
 npm run typecheck    # tsc
-npm test             # vitest: formatting, dates, threshold rules, page rendering with a mocked API
+npm test             # vitest: pure logic (lib/ folders) and page rendering with a mocked API
 npm run build        # typecheck + production build
 ```
 
@@ -72,10 +72,56 @@ Run `npm run build && npm test` before pushing; CI for this repo is not set up y
 
 - **Stack:** React 18, TypeScript, Vite, React Router, TanStack Query (requests, caching, keeping the last render
   while a filter change loads) and Recharts.
-- **Layout:** `src/api` (types, client, query hooks), `src/lib` (dates, formatting, training rules, theme),
-  `src/components`, `src/pages`.
 - **Threshold rules:** `src/lib/training.ts` mirrors the backend's rule for which FTP or threshold HR is in effect on
   a date (`analysis.Timeline`), and its tests use the same cases as the backend's.
+
+### Project structure
+
+```
+src/
+  main.tsx            entry: global styles, providers, <App/>
+  app/                the shell: App (top bar + current page), routes.tsx, nav.ts, layout/, queryClient
+  features/<page>/    one folder per page: fitness, calendar, activities (the list), activity-detail (one
+                      workout), power-curve, health, settings
+    <Name>Page.tsx    lays out the page from its components; holds only state shared between them
+    components/       pieces of this page
+    hooks/            the page's data (wrapping api/ queries) and form or view state
+    lib/              the page's pure logic and types, with tests beside them
+    index.ts          exports the page, nothing else
+  components/         generic building blocks (no knowledge of any page), imported from "@/components"
+    charts/           ChartCard, TooltipBox + tooltipContent, DailyLineChart, Legend, shared axis/grid props
+    controls/         Segmented, RangePresetPicker, Field
+    data/             StatTile, DataTable, Badge
+    feedback/         Loading / ErrorState / Empty, their *Card versions, ErrorBoundary
+    layout/           PageHeader, Card + CardHeader
+  hooks/              generic hooks: useColors (chart colours), useRangePreset, useThemeChoice
+  api/                http.ts (fetch + errors), endpoints.ts (one function per endpoint), queries.ts (TanStack
+                      Query hooks and query keys), types.ts (response shapes)
+  lib/                generic pure helpers: dates, format, training (threshold rules), paths (in-app URLs), theme
+  styles/             global CSS in cascade order (index.css imports the rest); page CSS lives with its page
+  test/               test setup and helpers (mockApi, renderAt)
+```
+
+Conventions:
+
+- **Imports** use `@/` for `src/` (`import { ChartCard } from "@/components"`), and relative paths within a feature.
+  Features never import from each other.
+- **Data** is read only through the hooks in `api/queries.ts` (the `@/api` barrel does not export the raw
+  endpoints). Query keys are defined once, in `queryKeys`.
+- **Where code goes:** something that knows about one page lives in that page's folder. Something generic (a line
+  chart of daily values, a date formatter) goes in the shared `components/`, `hooks/` or `lib/`, even if one page
+  uses it so far; it must not know about any page.
+- **Logic is pure and tested:** sorting, grouping, series, zones and projections are plain functions in `lib/`
+  folders with `*.test.ts` files beside them. `app/App.test.tsx` covers pages end to end with a mocked API.
+- **Charts** take their colours from `useColors()` (theme tokens, never literal colours) and their frame from
+  `axisProps`, `gridProps`, `CHART_MARGIN` and `lineCursor`/`barCursor`. Every data chart sits in a `ChartCard` with
+  a `table` twin.
+- **Files are named after the component they export** (small families share one: `Card` + `CardHeader`, the state
+  cards); a file that exports components exports nothing else (for fast refresh), so helpers live in `.ts` files.
+
+To add a page: create `features/<name>/` with `<Name>Page.tsx` and an `index.ts` exporting it, add its route in
+`app/routes.tsx` and its nav entry in `app/nav.ts`, and add its endpoint (if new) to `api/endpoints.ts`,
+`api/queries.ts` and `api/types.ts`.
 
 ### Charts
 

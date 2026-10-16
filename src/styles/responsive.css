@@ -1,0 +1,17 @@
+/* Phones and narrow windows. Kept last: it overrides the rules above at equal specificity. */
+
+@media (max-width: 720px) {
+  .topbar {
+    padding: 0 16px;
+    gap: 12px;
+  }
+  .topbar-end .freshness {
+    display: none;
+  }
+  .main {
+    padding: 16px;
+  }
+  .grid.two {
+    grid-template-columns: 1fr;
+  }
+}

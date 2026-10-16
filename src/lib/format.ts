@@ -37,6 +37,13 @@ export function hoursMinutes(seconds: number | null | undefined): string {
   return h ? `${h}h ${String(m % 60).padStart(2, "0")}m` : `${m}m`;
 }
 
+/** Elapsed time on a workout's axis: "1:05" past an hour, "45m" before. */
+export function elapsedLabel(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return h ? `${h}:${String(m).padStart(2, "0")}` : `${m}m`;
+}
+
 /** Power-curve durations: 1s, 30s, 5m, 1h, 1h30. */
 export function durationLabel(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;

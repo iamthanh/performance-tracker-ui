@@ -2,6 +2,9 @@
 
 export type ISODate = string;
 
+/** One value on one day (a daily metric, a weight, a training-load figure). */
+export type DatedValue = { date: ISODate; value: number };
+
 export function toISO(d: Date): ISODate {
   return d.toISOString().slice(0, 10);
 }
@@ -67,6 +70,11 @@ export const formatFullDay = (iso: ISODate) => fullFmt.format(parseISO(iso));
 export const formatMonth = (iso: ISODate) => monthFmt.format(parseISO(iso));
 /** "Oct '26": month and year without reading like a day of the month. */
 export const formatShortMonth = (iso: ISODate) => `${shortMonthFmt.format(parseISO(iso))} '${iso.slice(2, 4)}`;
+
+/** Date-axis tick labels: days for spans up to ~6 months, months beyond. */
+export function dateTickFormatter(spanDays: number): (iso: ISODate) => string {
+  return (iso) => (spanDays > 200 ? formatShortMonth(iso) : formatDay(iso));
+}
 
 export interface RangePreset {
   id: string;

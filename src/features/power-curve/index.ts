@@ -1,0 +1,1 @@
+export { PowerCurvePage } from "./PowerCurvePage";

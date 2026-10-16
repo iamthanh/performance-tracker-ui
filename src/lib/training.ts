@@ -1,4 +1,4 @@
-import type { LoadDay, ThresholdValue } from "../api/types";
+import type { LoadDay, ThresholdValue } from "@/api/types";
 
 /** Form (TSB) bands as TrainingPeaks describes them. */
 export function formStatus(tsb: number): { label: string; detail: string } {
@@ -66,8 +66,4 @@ export function thresholdHistory(
     points.push({ date, value: entry.value, origin: entry.origin });
   }
   return points;
-}
-
-export function sum<T>(items: T[], pick: (item: T) => number | null | undefined): number {
-  return items.reduce((total, item) => total + (pick(item) ?? 0), 0);
 }
