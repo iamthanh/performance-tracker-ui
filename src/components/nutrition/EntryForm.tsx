@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 
 import { MEALS, useFoods, useNutritionMutations, type EntryInput, type Meal } from "@/api";
-import { FORM_NUTRIENTS, foodLabel, MEAL_LABELS, amount, scaled } from "@/lib/nutrition";
+import { amount, FORM_NUTRIENTS, foodLabel, MEAL_LABELS, nutrientsOf, scaled } from "@/lib/nutrition";
 
 import { Field } from "../controls";
 import { draftToNutrients, type NutrientDraft } from "./draft";
@@ -32,17 +32,21 @@ export function EntryForm({
 
   const food = foods.data?.find((f) => String(f.id) === foodId);
   const count = Number(servings) > 0 ? Number(servings) : 1;
-  const preview = food ? scaled(food, count) : null;
+  // Typed-in values are per serving, like a saved food's: the entry stores them x servings.
+  const typed = draftToNutrients(nutrients);
+  const typedTotals = Object.fromEntries(Object.entries(typed).map(([k, v]) => [k, v * count]));
+  const preview = food ? scaled(nutrientsOf(food), count) : count !== 1 && Object.keys(typed).length ? typedTotals : null;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const body: EntryInput = { local_date: date, meal: fixedMeal ?? meal, servings: count };
     if (food) body.food_id = food.id;
-    else Object.assign(body, { name }, draftToNutrients(nutrients));
+    else Object.assign(body, { name }, typedTotals);
     if (activity) {
       Object.assign(body, { activity_source: activity.source, activity_source_id: activity.source_id });
-      if (minutes.trim() !== "") body.offset_s = Number(minutes) * 60;
+      if (minutes.trim() !== "") body.offset_s = Math.round(Number(minutes) * 60);
     }
+    if (createEntry.isPending) return;
     createEntry.mutate(body, {
       onSuccess: () => {
         setServings("1");
@@ -90,7 +94,7 @@ export function EntryForm({
             <Field label="Name" style={{ flex: 1, minWidth: 160 }}>
               <input type="text" required placeholder="e.g. banana" value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
-            <NutrientFields value={nutrients} onChange={setNutrients} />
+            <NutrientFields value={nutrients} onChange={setNutrients} perServing />
           </>
         )}
         <button className="btn primary" type="submit" disabled={createEntry.isPending}>
@@ -98,9 +102,9 @@ export function EntryForm({
         </button>
       </form>
       {preview ? (
-        <p className="small muted" style={{ marginBottom: 0 }}>
+        <p className="small muted" style={{ marginBottom: 0 }} aria-live="polite">
           Adds{" "}
-          {FORM_NUTRIENTS.filter((n) => preview[n.key] !== null)
+          {FORM_NUTRIENTS.filter((n) => preview[n.key] !== null && preview[n.key] !== undefined)
             .map((n) => `${amount(preview[n.key], n.unit)} ${n.label.toLowerCase()}`)
             .join(" · ") || "no known nutrients"}
         </p>

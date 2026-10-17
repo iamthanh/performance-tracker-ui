@@ -22,7 +22,7 @@ export function DayNav({
       <button type="button" className="btn" onClick={onToday}>
         Today
       </button>
-      <button type="button" className="btn" onClick={onNext} aria-label="Next day">
+      <button type="button" className="btn" onClick={onNext} aria-label="Next day" disabled={day >= today()}>
         →
       </button>
       <Field inline label={<span className="sr-only">Day</span>}>

@@ -12,9 +12,14 @@ export function DayTiles({ day }: { day: NutritionDay | undefined }) {
         label="Burned"
         value={num(day?.total_kcal)}
         unit="kcal"
-        hint={day?.total_kcal ? (day.workout_kcal ? `Workouts ${num(day.workout_kcal)} kcal` : undefined) : "From your watch, once synced"}
+        hint={day?.total_kcal ? (day.partial ? "So far today" : undefined) : "From your watch, once synced"}
       />
-      <StatTile label="Balance" value={day?.balance_kcal === null || day?.balance_kcal === undefined ? "—" : signed(day.balance_kcal, 0)} unit="kcal" />
+      <StatTile
+        label="Balance"
+        value={day?.partial || day?.balance_kcal === null || day?.balance_kcal === undefined ? "—" : signed(day.balance_kcal, 0)}
+        unit="kcal"
+        hint={day?.partial ? "Once the day is over" : undefined}
+      />
       <StatTile label="Workouts" value={num(day?.workout_kcal)} unit="kcal" />
       <StatTile label="Carbs" value={num(intake?.carbs_g)} unit="g" />
       <StatTile label="Protein" value={num(intake?.protein_g)} unit="g" />

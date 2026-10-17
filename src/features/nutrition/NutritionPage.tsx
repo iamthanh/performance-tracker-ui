@@ -24,8 +24,8 @@ export function NutritionPage() {
         <LoadingCard />
       ) : (
         <>
-          <DayTiles day={totals} />
-          <EntriesCard day={day} entries={entries.data ?? []} />
+          <DayTiles day={daily.isPlaceholderData ? undefined : totals} />
+          <EntriesCard day={day} entries={entries.data ?? []} stale={entries.isPlaceholderData} />
           <FoodsCard />
         </>
       )}

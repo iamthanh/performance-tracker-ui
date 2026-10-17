@@ -64,7 +64,7 @@ export function EnergyCard({ start, end, tick }: { start: string; end: string; t
               ))}
             />
             <Bar dataKey="eaten" fill={c["series-1"]} radius={[4, 4, 0, 0]} maxBarSize={24} isAnimationActive={false} />
-            <Line dataKey="burned" stroke={c["series-2"]} strokeWidth={2} dot={false} connectNulls isAnimationActive={false} />
+            <Line dataKey="burned" stroke={c["series-2"]} strokeWidth={2} dot={false} isAnimationActive={false} />
           </ComposedChart>
         </ResponsiveContainer>
       )}

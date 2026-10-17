@@ -32,7 +32,8 @@ export function groupByDay(activities: ActivityRow[]): Map<ISODate, ActivityRow[
 
 /** Average kcal eaten per logged day and burned per day the watch reported, in the month of `month`. */
 export function monthEnergy(days: NutritionDay[], month: ISODate): { eaten: number | null; burned: number | null } {
-  const inMonth = days.filter((d) => d.date.slice(0, 7) === month.slice(0, 7));
+  // Today is left out: its totals cover only part of the day.
+  const inMonth = days.filter((d) => d.date.slice(0, 7) === month.slice(0, 7) && !d.partial);
   const mean = (values: number[]) => (values.length ? values.reduce((a, b) => a + b, 0) / values.length : null);
   return {
     eaten: mean(inMonth.flatMap((d) => (d.entries && d.intake.kcal !== null ? [d.intake.kcal] : []))),

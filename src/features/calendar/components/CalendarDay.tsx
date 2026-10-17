@@ -30,6 +30,7 @@ export function CalendarDay({
       {eaten !== null || burned !== null ? (
         <div className="cal-energy" title="kcal eaten / burned">
           {[eaten !== null ? `In ${num(eaten)}` : null, burned !== null ? `Out ${num(burned)}` : null].filter(Boolean).join(" · ")}
+          <span className="sr-only"> kcal eaten / burned</span>
         </div>
       ) : null}
     </div>

@@ -1,7 +1,18 @@
 import { useState, type FormEvent } from "react";
 
 import { useFoods, useNutritionMutations, type Food } from "@/api";
-import { Card, CardHeader, DataTable, draftToNutrients, Empty, Field, NutrientFields, nutrientsToDraft, type NutrientDraft } from "@/components";
+import {
+  Card,
+  CardHeader,
+  DataTable,
+  draftToNutrients,
+  Empty,
+  ErrorState,
+  Field,
+  NutrientFields,
+  nutrientsToDraft,
+  type NutrientDraft,
+} from "@/components";
 import { num } from "@/lib/format";
 
 /** Saved foods: add, edit and delete. Logged entries keep their own copy of the nutrients. */
@@ -13,13 +24,20 @@ export function FoodsCard() {
   const [serving, setServing] = useState("");
   const [nutrients, setNutrients] = useState<NutrientDraft>({});
 
+  const clearErrors = () => {
+    createFood.reset();
+    updateFood.reset();
+    deleteFood.reset();
+  };
   const reset = () => {
+    clearErrors();
     setEditing(null);
     setName("");
     setServing("");
     setNutrients({});
   };
   const edit = (food: Food) => {
+    clearErrors();
     setEditing(food);
     setName(food.name);
     setServing(food.serving ?? "");
@@ -30,6 +48,7 @@ export function FoodsCard() {
     // Nutrients the form does not show (sugars, fibre, potassium) are kept as they were.
     const kept = editing ? { sugars_g: editing.sugars_g, fiber_g: editing.fiber_g, potassium_mg: editing.potassium_mg } : {};
     const body = { ...kept, name, serving: serving || null, brand: editing?.brand ?? null, note: editing?.note ?? null, ...draftToNutrients(nutrients) };
+    clearErrors();
     if (editing) updateFood.mutate({ id: editing.id, body }, { onSuccess: reset });
     else createFood.mutate(body, { onSuccess: reset });
   };
@@ -81,14 +100,19 @@ export function FoodsCard() {
                 header: null,
                 cell: (f) => (
                   <>
-                    <button type="button" className="btn ghost small" onClick={() => edit(f)}>
+                    <button type="button" className="btn ghost small" aria-label={`Edit ${f.name}`} onClick={() => edit(f)}>
                       Edit
                     </button>
                     <button
                       type="button"
                       className="btn ghost small"
                       disabled={deleteFood.isPending}
-                      onClick={() => window.confirm(`Delete ${f.name}? Entries already logged keep their nutrients.`) && deleteFood.mutate(f.id)}
+                      aria-label={`Delete ${f.name}`}
+                      onClick={() => {
+                        if (!window.confirm(`Delete ${f.name}? Entries already logged keep their nutrients.`)) return;
+                        clearErrors();
+                        deleteFood.mutate(f.id, { onSuccess: () => editing?.id === f.id && reset() });
+                      }}
                     >
                       Delete
                     </button>
@@ -97,6 +121,8 @@ export function FoodsCard() {
               },
             ]}
           />
+        ) : foods.isError ? (
+          <ErrorState error={foods.error} />
         ) : foods.isPending ? null : (
           <Empty title="No saved foods yet" />
         )}

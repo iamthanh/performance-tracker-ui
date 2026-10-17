@@ -50,33 +50,41 @@ function FuelingSummary({ fueling: f }: { fueling: Fueling }) {
 function FuelingTable({ entries }: { entries: NutritionEntry[] }) {
   const { deleteEntry } = useNutritionMutations();
   return (
-    <DataTable
-      rows={entries}
-      rowKey={(e) => e.id}
-      columns={[
-        { key: "when", header: "When", cell: (e) => (e.meal === "during_workout" ? clockOffset(e.offset_s) : MEAL_LABELS[e.meal]) },
-        { key: "name", header: "Item", headerClassName: "left", cellClassName: "left", cell: (e) => e.name },
-        { key: "servings", header: "Servings", cell: (e) => num(e.servings, Number.isInteger(e.servings) ? 0 : 1) },
-        { key: "carbs", header: "Carbs (g)", cell: (e) => num(e.carbs_g) },
-        { key: "fluid", header: "Fluid (ml)", cell: (e) => num(e.fluid_ml) },
-        { key: "sodium", header: "Sodium (mg)", cell: (e) => num(e.sodium_mg) },
-        { key: "caffeine", header: "Caffeine (mg)", cell: (e) => num(e.caffeine_mg) },
-        { key: "kcal", header: "kcal", cell: (e) => num(e.kcal) },
-        {
-          key: "remove",
-          header: null,
-          cell: (e) => (
-            <button
-              type="button"
-              className="btn ghost small"
-              disabled={deleteEntry.isPending}
-              onClick={() => window.confirm(`Remove ${e.name}?`) && deleteEntry.mutate(e.id)}
-            >
-              Remove
-            </button>
-          ),
-        },
-      ]}
-    />
+    <>
+      {deleteEntry.isError ? (
+        <p className="small" role="alert" style={{ color: "var(--critical-text)" }}>
+          {(deleteEntry.error as Error).message}
+        </p>
+      ) : null}
+      <DataTable
+        rows={entries}
+        rowKey={(e) => e.id}
+        columns={[
+          { key: "when", header: "When", cell: (e) => (e.meal === "during_workout" ? clockOffset(e.offset_s) : MEAL_LABELS[e.meal]) },
+          { key: "name", header: "Item", headerClassName: "left", cellClassName: "left", cell: (e) => e.name },
+          { key: "servings", header: "Servings", cell: (e) => num(e.servings, Number.isInteger(e.servings) ? 0 : 1) },
+          { key: "carbs", header: "Carbs (g)", cell: (e) => num(e.carbs_g) },
+          { key: "fluid", header: "Fluid (ml)", cell: (e) => num(e.fluid_ml) },
+          { key: "sodium", header: "Sodium (mg)", cell: (e) => num(e.sodium_mg) },
+          { key: "caffeine", header: "Caffeine (mg)", cell: (e) => num(e.caffeine_mg) },
+          { key: "kcal", header: "kcal", cell: (e) => num(e.kcal) },
+          {
+            key: "remove",
+            header: null,
+            cell: (e) => (
+              <button
+                type="button"
+                className="btn ghost small"
+                disabled={deleteEntry.isPending}
+                aria-label={`Remove ${e.name}`}
+                onClick={() => window.confirm(`Remove ${e.name}?`) && deleteEntry.mutate(e.id)}
+              >
+                Remove
+              </button>
+            ),
+          },
+        ]}
+      />
+    </>
   );
 }

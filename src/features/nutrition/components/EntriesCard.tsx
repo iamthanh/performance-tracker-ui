@@ -5,15 +5,20 @@ import { num } from "@/lib/format";
 import { MEAL_LABELS } from "@/lib/nutrition";
 
 /** Log food and drink for the day, and what is logged so far. */
-export function EntriesCard({ day, entries }: { day: string; entries: NutritionEntry[] }) {
+export function EntriesCard({ day, entries, stale = false }: { day: string; entries: NutritionEntry[]; stale?: boolean }) {
   const { deleteEntry } = useNutritionMutations();
   return (
-    <Card label="Food and drink">
+    <Card label="Food and drink" className={stale ? "refetching" : undefined}>
       <CardHeader
         title={`Food and drink · ${formatFullDay(day)}`}
         subtitle="Pick a saved food, or type in what you had. Fueling during a workout is easiest to log on the workout's page."
       />
       <EntryForm date={day} />
+      {deleteEntry.isError ? (
+        <p className="small" role="alert" style={{ color: "var(--critical-text)" }}>
+          {(deleteEntry.error as Error).message}
+        </p>
+      ) : null}
       <div className="table-wrap" style={{ marginTop: 12 }}>
         {entries.length ? (
           <DataTable
@@ -35,6 +40,7 @@ export function EntriesCard({ day, entries }: { day: string; entries: NutritionE
                     type="button"
                     className="btn ghost small"
                     disabled={deleteEntry.isPending}
+                    aria-label={`Remove ${e.name}`}
                     onClick={() => window.confirm(`Remove ${e.name}?`) && deleteEntry.mutate(e.id)}
                   >
                     Remove

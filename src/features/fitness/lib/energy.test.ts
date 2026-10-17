@@ -14,3 +14,8 @@ it("keeps the whole range when there is any data", () => {
   ]);
   expect(energyPoints([day("2026-10-01", 0, null, null)])).toEqual([]);
 });
+
+it("leaves today's partial burned total and balance out", () => {
+  const today = { ...day("2026-10-16", 1, 600, 1200), balance_kcal: -600, partial: true } as NutritionDay;
+  expect(energyPoints([today])[0]).toMatchObject({ eaten: 600, burned: null, balance: null });
+});

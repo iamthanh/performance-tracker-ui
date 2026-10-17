@@ -42,7 +42,12 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
         detail = body.detail;
         fromApi = true;
       } else if (Array.isArray(body.detail)) {
-        detail = body.detail.map((d: { msg?: string }) => d.msg).join("; ");
+        detail = body.detail
+          .map((d: { msg?: string; loc?: unknown[] }) => {
+            const field = d.loc?.[d.loc.length - 1];
+            return typeof field === "string" ? `${field}: ${d.msg}` : d.msg;
+          })
+          .join("; ");
         fromApi = true;
       }
     } catch {

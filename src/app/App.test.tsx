@@ -16,6 +16,7 @@ it("shows fitness, fatigue and form from the training load", async () => {
   mockApi({
     "/health": health,
     "/training-load": () => load,
+    "/nutrition/daily": () => [],
     "/summary": (url) => ({ start_date: url.searchParams.get("start_date"), end_date: end, group_by: "week", periods: [] }),
   });
   renderAt("/fitness");
@@ -51,6 +52,7 @@ it("falls back to the current month for an invalid ?month=", async () => {
   mockApi({
     "/health": health,
     "/activities": () => [],
+    "/nutrition/daily": () => [],
     "/summary": (url) => ({ start_date: url.searchParams.get("start_date"), end_date: "", group_by: "week", periods: [] }),
   });
   renderAt("/calendar?month=2025-13");

@@ -28,5 +28,7 @@ describe("calendar", () => {
     const days = [day("2026-09-30", 9000, 3, 9000), day("2026-10-01", 2000, 2, 3000), day("2026-10-02", null, 0, 2800), day("2026-10-03", 3000, 4, null)];
     expect(monthEnergy(days, "2026-10-01")).toEqual({ eaten: 2500, burned: 2900 });
     expect(monthEnergy([], "2026-10-01")).toEqual({ eaten: null, burned: null });
+    const today = { ...day("2026-10-04", 500, 1, 900), partial: true } as NutritionDay; // the day is not over
+    expect(monthEnergy([...days, today], "2026-10-01")).toEqual({ eaten: 2500, burned: 2900 });
   });
 });

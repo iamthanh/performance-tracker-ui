@@ -306,6 +306,8 @@ export interface NutritionDay {
   active_kcal: number | null;
   /** Intake minus total, when both are known. */
   balance_kcal: number | null;
+  /** Today: the day is not over, so its totals are still growing. */
+  partial: boolean;
 }
 
 export interface Fueling {
