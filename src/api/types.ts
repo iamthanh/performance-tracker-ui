@@ -485,3 +485,44 @@ export interface ImportResult {
   /** The same workout already stored from another service (the lists show it once). */
   also_stored_as: { source: string; source_id: string; name: string | null }[];
 }
+
+// -- performance index -----------------------------------------------------------------------------
+
+export const PERFORMANCE_COMPONENTS = ["sprint", "anaerobic", "vo2max", "threshold", "endurance", "durability"] as const;
+export type PerformanceComponent = (typeof PERFORMANCE_COMPONENTS)[number];
+export type PerformanceWeights = Record<PerformanceComponent, number>;
+
+export interface PerformanceSettings {
+  weights: PerformanceWeights;
+  /** How fast an untested component eases down, as a share per week (0.005 = 0.5 %). */
+  decay_per_week: number;
+  presets: Record<string, { label: string; weights: PerformanceWeights }>;
+}
+
+export interface PerformanceDay {
+  date: string;
+  /** Weighted geometric mean of the component indexes; 100 = your baseline. */
+  score: number | null;
+  components: Record<PerformanceComponent, { index: number | null; value: number | null; tested: string | null }>;
+  /** Median efficiency factor (NP ÷ HR) of steady rides over 42 days; not in the score. */
+  efficiency: number | null;
+}
+
+/** A new best that raised a component. */
+export interface PerformanceEvent {
+  date: string;
+  component: PerformanceComponent;
+  from: number;
+  to: number;
+  index_change: number;
+  ride: { source: string; source_id: string; name: string | null; date: string } | null;
+}
+
+export interface Performance {
+  weights: PerformanceWeights;
+  decay_per_week: number;
+  window_days: number;
+  components: { key: PerformanceComponent; label: string; description: string; unit: "W" | "share"; baseline: number | null }[];
+  days: PerformanceDay[];
+  events: PerformanceEvent[];
+}

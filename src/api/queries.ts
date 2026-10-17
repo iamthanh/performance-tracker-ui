@@ -14,6 +14,9 @@ export const queryKeys = {
   activity: (source: string, id: string) => ["activity", source, id] as const,
   streams: (source: string, id: string, maxPoints: number) => ["streams", source, id, maxPoints] as const,
   insights: (source: string, id: string) => ["insights", source, id] as const,
+  // Both under one prefix, so saving the weights refreshes the index.
+  performance: (p: Params<"performance">) => ["performance", "index", p] as const,
+  performanceSettings: ["performance", "settings"] as const,
   summary: (p: Params<"summary">) => ["summary", p] as const,
   trainingLoad: (p: Params<"trainingLoad">) => ["training-load", p] as const,
   powerCurve: (p: Params<"powerCurve">) => ["power-curve", p] as const,
@@ -99,6 +102,21 @@ export const useNutritionEntries = (p: Params<"nutritionEntries">) =>
 
 export const useNutritionDaily = (p: Params<"nutritionDaily">) =>
   useQuery({ queryKey: queryKeys.nutritionDaily(p), queryFn: () => api.nutritionDaily(p), ...keep });
+
+export const usePerformance = (p: Params<"performance">) =>
+  useQuery({ queryKey: queryKeys.performance(p), queryFn: () => api.performance(p), ...keep });
+
+export const usePerformanceSettings = () =>
+  useQuery({ queryKey: queryKeys.performanceSettings, queryFn: api.performanceSettings });
+
+/** Saving the weights or decay re-scores the whole index. */
+export function useSetPerformanceSettings() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: api.setPerformanceSettings,
+    onSuccess: () => client.invalidateQueries({ queryKey: ["performance"] }),
+  });
+}
 
 export const useInsights = (source: string, id: string) =>
   useQuery({ queryKey: queryKeys.insights(source, id), queryFn: () => api.insights(source, id) });

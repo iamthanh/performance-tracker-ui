@@ -30,22 +30,23 @@ it("shows fitness, fatigue and form from the training load", async () => {
 it("explains how to start the API when it is unreachable", async () => {
   vi.stubGlobal("fetch", vi.fn(async () => new Response("Bad Gateway", { status: 502 })));
   renderAt("/fitness");
-  expect(await screen.findByText("The fitness-hub API is not reachable")).toBeInTheDocument();
-  expect(screen.getByText(/serve-api/)).toBeInTheDocument();
+  // The performance index and the training load each say so.
+  expect((await screen.findAllByText("The fitness-hub API is not reachable")).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/serve-api/).length).toBeGreaterThan(0);
 });
 
 it("treats the dev proxy's empty 500 as an unreachable API", async () => {
   vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 500 })));
   renderAt("/fitness");
-  expect(await screen.findByText("The fitness-hub API is not reachable")).toBeInTheDocument();
+  expect((await screen.findAllByText("The fitness-hub API is not reachable")).length).toBeGreaterThan(0);
 });
 
 it("shows the API's own message for a 503", async () => {
   const detail = "database schema version 4 is newer than this fitness-hub supports (3); upgrade fitness-hub";
   vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ detail }), { status: 503 })));
   renderAt("/fitness");
-  expect(await screen.findByText("Something went wrong")).toBeInTheDocument();
-  expect(screen.getByText(detail)).toBeInTheDocument();
+  expect((await screen.findAllByText("Something went wrong")).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(detail).length).toBeGreaterThan(0);
 });
 
 it("falls back to the current month for an invalid ?month=", async () => {

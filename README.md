@@ -7,14 +7,14 @@ training metrics. Nothing leaves your machine.
 
 | Page | What it shows |
 |---|---|
-| **Fitness** | Fitness (CTL), fatigue (ATL) and form (TSB) with daily TSS, like the Performance Management Chart; weekly TSS; ramp rate; calories eaten vs burned |
+| **Fitness** | Performance index (how good you are, from best efforts: a score and six components with when each was last tested, what raised it, aerobic efficiency); fitness (CTL), fatigue (ATL) and form (TSB) with daily TSS, like the Performance Management Chart; weekly TSS; ramp rate; calories eaten vs burned |
 | **Calendar** | Month view of workouts (duration, TSS, IF, distance, kcal burned) with weekly totals (hours, distance, TSS, kJ, kcal); kcal in and out per day |
 | **Activities** | Every workout, sortable and searchable, with TSS, IF, NP, average HR, calories burned and decoupling; **Import workout** uploads .fit/.gpx/.tcx files (drag and drop, several at once) and analyses them |
 | **Workout** | Power, heart rate, cadence, speed and elevation over time with a synced crosshair and readout; NP, IF, TSS, VI, EF, Pw:HR decoupling, work; time in power and HR zones; peak power vs your 90-day best; W/kg and kJ/kg; durability (best 1/5/8/10/15/20 min after 10, 20 ... kJ/kg of work vs fresh); W′ balance chart with matches burned; efforts above FTP found automatically; route; fueling (carbs, fluid and sodium per hour, caffeine, vs energy and estimated carbs burned); laps |
 | **Power curve** | Mean-maximal power from 1 s to 5 h, comparing two date ranges, with the ride that set each best |
 | **Health** | Resting HR, HRV, sleep stages and weight from Garmin next to form; all-day heart rate for any day |
 | **Nutrition** | A day's food and drink by meal against calories burned (your watch's total), with carbs, protein and fat; saved foods for one-tap logging |
-| **Settings** | FTP, threshold HR, max HR and resting HR in effect; set your own from a date on (re-scores workouts); FTP history |
+| **Settings** | FTP, threshold HR, max HR and resting HR in effect; set your own from a date on (re-scores workouts); FTP history; performance index weights (presets by rider type) and easing |
 
 ## Run it
 
