@@ -9,7 +9,7 @@ import { WeightCard } from "./components/WeightCard";
 import { useHealthData } from "./hooks/useHealthData";
 import { HEALTH_PRESETS } from "./lib/series";
 
-/** Recovery markers (resting HR, HRV, sleep) next to training form, and body weight over all time. */
+/** Recovery markers (resting HR, HRV, sleep) next to training form, and body weight, over the chosen range. */
 export function HealthPage() {
   const { presetId, setPresetId, preset, range } = useRangePreset("90d", HEALTH_PRESETS);
   const health = useHealthData(range, !!preset.all);
@@ -51,9 +51,8 @@ export function HealthPage() {
         </>
       )}
 
-      {/* Always here, on its own range (all time by default): weigh-ins come in spells the page's range often
-          misses. One instance, so its range survives changes of the page's. */}
-      <WeightCard />
+      {/* Always here (weight comes from imports, not only the watch), over the page's range. */}
+      <WeightCard range={range} allTime={!!preset.all} />
 
       {health.loading || health.empty ? null : (
         <>

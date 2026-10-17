@@ -18,33 +18,22 @@ import {
   Y_AXIS_WIDTH,
 } from "@/components";
 import { useColors } from "@/hooks";
-import { addDays, dateTickFormatter, formatFullDay, today } from "@/lib/dates";
+import { dateTickFormatter, formatFullDay } from "@/lib/dates";
 import { num, signed } from "@/lib/format";
 import { fromKg, saveWeightUnit, storedWeightUnit, type WeightUnit } from "@/lib/nutrition";
 
 import { chartPoints, dayNumber, fromDayNumber, KIND_LABEL, tableRows, weightStats, type WeightPoint, type WeightRow } from "../lib/weight";
 
-type Span = "1y" | "2y" | "3y" | "5y" | "all";
-const SPANS: { value: Span; label: string; days?: number }[] = [
-  { value: "1y", label: "1 year", days: 365 },
-  { value: "2y", label: "2 years", days: 730 },
-  { value: "3y", label: "3 years", days: 1096 },
-  { value: "5y", label: "5 years", days: 1826 },
-  { value: "all", label: "All time" },
-];
-
 /** Raw weigh-ins (dots) and the trend weight rides use (line): solid where it rests on weigh-ins around it,
- *  dashed where it is a guess across a long gap or carried past the last weigh-in. Own range, all time by default:
- *  weigh-ins come in spells the page's range often misses. */
-export function WeightCard() {
+ *  dashed where it is a guess across a long gap or carried past the last weigh-in, over the page's range. */
+export function WeightCard({ range, allTime }: { range: { start: string; end: string }; allTime: boolean }) {
   const c = useColors();
-  const end = today();
+  const end = range.end;
   const weight = useWeight();
-  const [span, setSpan] = useState<Span>("all");
   const [unit, setUnit] = useState<WeightUnit>(storedWeightUnit);
   const all = useMemo(() => weight.data?.days ?? [], [weight.data]);
-  const days = SPANS.find((x) => x.value === span)?.days;
-  const start = days ? addDays(end, -(days - 1)) : (all[0]?.date ?? end);
+  // The page's range; "All time" starts with the first weigh-in rather than in 2000.
+  const start = allTime ? (all[0]?.date ?? range.start) : range.start;
   const shown = all.filter((d) => d.date >= start && d.date <= end);
   const stats = weightStats(shown, unit);
   const lastEver = [...all].reverse().find((d) => d.weigh_in !== null);
@@ -63,21 +52,18 @@ export function WeightCard() {
         { label: "Trend, estimated or carried", color: c["text-muted"] },
       ]}
       actions={
-        <>
-          <Segmented label="Weight range" value={span} onChange={setSpan} options={SPANS} />
-          <Segmented
-            label="Weight unit"
-            value={unit}
-            onChange={(u) => {
-              setUnit(u);
-              saveWeightUnit(u);
-            }}
-            options={[
-              { value: "kg", label: "kg" },
-              { value: "lb", label: "lb" },
-            ]}
-          />
-        </>
+        <Segmented
+          label="Weight unit"
+          value={unit}
+          onChange={(u) => {
+            setUnit(u);
+            saveWeightUnit(u);
+          }}
+          options={[
+            { value: "kg", label: "kg" },
+            { value: "lb", label: "lb" },
+          ]}
+        />
       }
       table={() => <WeightTable rows={tableRows(shown)} unit={unit} />}
     >
@@ -88,7 +74,7 @@ export function WeightCard() {
       ) : !stats ? (
         <p className="small muted">
           {lastEver
-            ? `No weight in this range: the latest weigh-in is from ${formatFullDay(lastEver.date)}. Pick “All time”.`
+            ? `No weight in this range: the latest weigh-in is from ${formatFullDay(lastEver.date)}. Pick a longer range at the top of the page.`
             : "No weigh-ins yet. Import a log with fitness-hub import-weight-csv (or sync a scale through Garmin or Google)."}
         </p>
       ) : (
