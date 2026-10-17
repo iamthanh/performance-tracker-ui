@@ -150,6 +150,10 @@ export interface Durability {
   total: number;
   /** Best watts per step, null when too little of the ride was left after it. */
   rows: { duration_s: number; watts: (number | null)[] }[];
+  /** Elapsed time (s, the stream clock) when each step was reached. */
+  step_times_s?: number[];
+  /** Work done (kJ) by round elapsed times: a time axis under the kJ one. */
+  time_marks?: { time_s: number; kj: number }[];
 }
 
 export interface WPrimeMatch {
