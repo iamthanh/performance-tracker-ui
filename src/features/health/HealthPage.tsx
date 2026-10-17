@@ -9,7 +9,7 @@ import { WeightCard } from "./components/WeightCard";
 import { useHealthData } from "./hooks/useHealthData";
 import { HEALTH_PRESETS } from "./lib/series";
 
-/** Recovery markers (resting HR, HRV, sleep) next to training form, and body weight over all time. */
+/** Recovery markers (resting HR, HRV, sleep) next to training form, and body weight, over the chosen range. */
 export function HealthPage() {
   const { presetId, setPresetId, preset, range } = useRangePreset("90d", HEALTH_PRESETS);
   const health = useHealthData(range, !!preset.all);

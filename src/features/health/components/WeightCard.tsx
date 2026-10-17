@@ -52,20 +52,18 @@ export function WeightCard({ range, allTime }: { range: { start: string; end: st
         { label: "Trend, estimated or carried", color: c["text-muted"] },
       ]}
       actions={
-        <>
-          <Segmented
-            label="Weight unit"
-            value={unit}
-            onChange={(u) => {
-              setUnit(u);
-              saveWeightUnit(u);
-            }}
-            options={[
-              { value: "kg", label: "kg" },
-              { value: "lb", label: "lb" },
-            ]}
-          />
-        </>
+        <Segmented
+          label="Weight unit"
+          value={unit}
+          onChange={(u) => {
+            setUnit(u);
+            saveWeightUnit(u);
+          }}
+          options={[
+            { value: "kg", label: "kg" },
+            { value: "lb", label: "lb" },
+          ]}
+        />
       }
       table={() => <WeightTable rows={tableRows(shown)} unit={unit} />}
     >
