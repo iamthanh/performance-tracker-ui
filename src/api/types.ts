@@ -196,8 +196,22 @@ export interface Efforts {
   items: Effort[];
 }
 
+/** The stretch with the highest average power for one duration, and the heart rate over it. */
+export interface BestEffort {
+  duration_s: number;
+  avg_power_w: number;
+  /** Elapsed time (s, the stream clock) the stretch starts and ends. */
+  start_s: number;
+  end_s: number;
+  avg_hr: number | null;
+  min_hr: number | null;
+  max_hr: number | null;
+}
+
 export interface Insights {
   weight: RideWeight | null;
+  /** 30 s to 60 min, then hourly, as long as the ride; null without cycling power. */
+  best_efforts: BestEffort[] | null;
   durability: Durability | null;
   w_prime: WPrime | null;
   efforts: Efforts | null;

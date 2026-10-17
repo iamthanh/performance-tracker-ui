@@ -1,6 +1,7 @@
 /* -- cards, tiles, tables -------------------------------------------------------------- */
 
 .card {
+  scroll-margin-top: 72px; /* clear of the sticky top bar when scrolled to */
   background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -110,6 +111,10 @@ table.data tbody tr:hover {
 }
 table.data tr.clickable {
   cursor: pointer;
+}
+table.data tr[aria-selected="true"] {
+  background: var(--surface-hover);
+  box-shadow: inset 3px 0 0 var(--series-4);
 }
 
 .muted {

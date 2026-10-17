@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { useActivity, useInsights, useStreams } from "@/api";
@@ -6,6 +7,7 @@ import { num } from "@/lib/format";
 
 import { ActivityHeader } from "./components/ActivityHeader";
 import { ActivityTiles } from "./components/ActivityTiles";
+import { BestEffortsCard } from "./components/BestEffortsCard";
 import { DurabilityCard } from "./components/DurabilityCard";
 import { EffortsCard } from "./components/EffortsCard";
 import { FuelingCard } from "./components/FuelingCard";
@@ -15,6 +17,7 @@ import { RouteCard } from "./components/RouteCard";
 import { StreamsSection } from "./components/StreamsSection";
 import { WPrimeCard } from "./components/WPrimeCard";
 import { ZoneCard } from "./components/ZoneCard";
+import type { Highlight } from "./lib/highlight";
 import { isOnFoot } from "./lib/sport";
 
 /** One workout's analysis: headline numbers, per-second charts, zones, peak power, durability, W′ balance,
@@ -25,6 +28,7 @@ export function ActivityPage() {
   const hasStreams = !!detail.data?.streams;
   const streams = useStreams(source, id, hasStreams);
   const insights = useInsights(source, id);
+  const [highlight, setHighlight] = useState<Highlight | null>(null);
 
   if (detail.isError) return <ErrorCard error={detail.error} />;
   if (detail.isPending) return <LoadingCard />;
@@ -37,7 +41,26 @@ export function ActivityPage() {
     <>
       <ActivityHeader detail={d} />
       <ActivityTiles detail={d} weight={ins?.weight ?? null} />
-      <StreamsSection hasStreams={hasStreams} streams={streams} onFoot={isOnFoot(d.activity.sport)} />
+      <StreamsSection
+        hasStreams={hasStreams}
+        streams={streams}
+        onFoot={isOnFoot(d.activity.sport)}
+        highlight={highlight}
+        onClearHighlight={() => setHighlight(null)}
+      />
+      {/* Right under the charts, where picking a row marks the stretch. */}
+      {ins?.best_efforts?.length ? (
+        <BestEffortsCard
+          efforts={ins.best_efforts}
+          kg={kg}
+          selected={highlight}
+          onSelect={(h) => {
+            setHighlight(h);
+            // Show the marked stretch: the charts are at the top of the page.
+            if (h) document.querySelector('[aria-label="Workout charts"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        />
+      ) : null}
       <div className="grid two">
         {m?.power_zones ? <ZoneCard title="Time in power zones" zones={m.power_zones} unit="W" threshold={`FTP ${num(m.ftp_w)} W`} /> : null}
         {m?.hr_zones ? (

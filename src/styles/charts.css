@@ -108,3 +108,11 @@
   color: var(--text-secondary);
   margin: 0 0 0 4px;
 }
+
+/* A filled key, e.g. the marked stretch on the workout charts. */
+.key-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
