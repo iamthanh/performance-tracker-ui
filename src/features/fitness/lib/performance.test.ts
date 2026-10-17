@@ -1,6 +1,6 @@
 import type { PerformanceDay, PerformanceEvent } from "@/api";
 
-import { change, daysSinceTested, newestFirst, scoredDays, tableDays, weightShares } from "./performance";
+import { change, daysSinceTested, newestFirst, scoredDays, splitText, tableDays, weightShares } from "./performance";
 
 const day = (date: string, score: number | null): PerformanceDay =>
   ({ date, score, components: {} as PerformanceDay["components"], efficiency: null }) as PerformanceDay;
@@ -42,5 +42,12 @@ describe("performance index helpers", () => {
     expect(rows[rows.length - 1]!.date).toBe("d199");
     expect(rows.length).toBe(29);
     expect(tableDays(days.slice(0, 50))).toHaveLength(50);
+  });
+
+  it("says whether a rise came from power or weight", () => {
+    expect(splitText({ power_pct: 4.7, weight_pct: 1.1 })).toBe("power +4.7 %, 1.1 % lighter");
+    expect(splitText({ power_pct: -2, weight_pct: -0.2 })).toBe("power −2.0 %, 0.2 % heavier");
+    expect(splitText({ power_pct: 3, weight_pct: 0 })).toBe("power +3.0 %, same weight");
+    expect(splitText(null)).toBeNull();
   });
 });

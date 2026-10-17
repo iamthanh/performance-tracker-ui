@@ -30,8 +30,8 @@ export function PerformanceCard({
       title="Performance index"
       subtitle={
         <>
-          How good you are, from your best efforts over the trailing {perf.window_days} days (100 = your baseline). Fitness below is
-          how much you have trained.
+          How good you are, from your best efforts in W/kg (each ride's power over its own weight) over the trailing{" "}
+          {perf.window_days} days; 100 = your baseline. Fitness below is how much you have trained.
         </>
       }
       refetching={refetching}
@@ -55,7 +55,10 @@ export function PerformanceCard({
                 title={formatFullDay(d.date)}
                 rows={[
                   { name: "Performance", value: num(d.score, 1), color: c["series-1"] },
-                  ...perf.components.map((k) => ({ name: k.label, value: num(d.components[k.key].index, 1) })),
+                  ...perf.components.map((k) => ({
+                    name: k.label,
+                    value: `${num(d.components[k.key].index, 1)}${d.components[k.key].estimated_weight ? " (est. weight)" : ""}`,
+                  })),
                 ]}
               />
             ))}

@@ -538,7 +538,17 @@ export interface PerformanceDay {
   date: string;
   /** Weighted geometric mean of the component indexes; 100 = your baseline. */
   score: number | null;
-  components: Record<PerformanceComponent, { index: number | null; value: number | null; tested: string | null }>;
+  components: Record<
+    PerformanceComponent,
+    {
+      index: number | null;
+      /** W/kg (durability: the share of fresh power kept). */
+      value: number | null;
+      tested: string | null;
+      /** The value rests on a ride whose weight was estimated across a long gap without weigh-ins. */
+      estimated_weight: boolean;
+    }
+  >;
   /** Median efficiency factor (NP ÷ HR) of steady rides over 42 days; not in the score. */
   efficiency: number | null;
 }
@@ -550,14 +560,27 @@ export interface PerformanceEvent {
   from: number;
   to: number;
   index_change: number;
-  ride: { source: string; source_id: string; name: string | null; date: string } | null;
+  ride: {
+    source: string;
+    source_id: string;
+    name: string | null;
+    date: string;
+    /** The ride's weight and where it came from (pre_ride, weigh_in, interpolated, estimated, carried). */
+    kg: number | null;
+    weight_kind: string | null;
+    /** Its key effort in watts (not for durability). */
+    watts?: number | null;
+  } | null;
+  /** How the new best came about against the window's previous best ride: power change and weight change (> 0 =
+   *  lighter), in %. */
+  split: { power_pct: number; weight_pct: number } | null;
 }
 
 export interface Performance {
   weights: PerformanceWeights;
   decay_per_week: number;
   window_days: number;
-  components: { key: PerformanceComponent; label: string; description: string; unit: "W" | "share"; baseline: number | null }[];
+  components: { key: PerformanceComponent; label: string; description: string; unit: "W/kg" | "share"; baseline: number | null }[];
   /** The first ride with power, and the day the index starts (once its first 90-day window is full). */
   first_ride: string | null;
   starts: string | null;
