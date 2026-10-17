@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { useActivity, useInsights, useRideCardio, useStreams } from "@/api";
+import { ApiError, useActivity, useInsights, useRideCardio, useStreams } from "@/api";
 import { ErrorCard, LoadingCard } from "@/components";
 import { num } from "@/lib/format";
 
@@ -77,7 +77,9 @@ export function ActivityPage() {
         {m && m.power_curve.length ? <PeakPowerCard detail={d} kg={kg} wkg={wkg} /> : null}
         {streams.data?.lat && streams.data.lng ? <RouteCard lat={streams.data.lat} lng={streams.data.lng} /> : null}
       </div>
-      {cardio.data && (cardio.data.blocks.length || cardio.data.recoveries.length) ? <HeartRatePowerCard data={cardio.data} /> : null}
+      {/* Rides only: a run with power is not on the cycling scale (the API sends no ride for it). */}
+      {cardio.data?.ride ? <HeartRatePowerCard data={cardio.data} /> : null}
+      {cardio.isError && !(cardio.error instanceof ApiError && cardio.error.status === 404) ? <ErrorCard error={cardio.error} /> : null}
       {/* Full width: six durations in the table, a duration picker in the header. */}
       {ins?.durability ? <DurabilityCard durability={ins.durability} weight={ins.weight} /> : null}
       {ins?.w_prime ? <WPrimeCard w={ins.w_prime} /> : null}

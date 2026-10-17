@@ -36,3 +36,18 @@ it("sets the ride against its recent normal", () => {
   expect(screen.getByText("harder than usual (≈ −12 W at 146 bpm)")).toBeInTheDocument();
   expect(screen.getByText(/19 bpm from 165/)).toBeInTheDocument();
 });
+
+it("says when the whole ride is left out as a sensor problem", () => {
+  const data: RideCardio = {
+    model: MODEL,
+    blocks: [{ start_s: 1500, clock_s: 1500, watts: 185, bpm: 61, temp_c: null, kj_before: 260, used: true, warm_up: false }],
+    ride: {
+      source: "strava", source_id: "2", name: "Ride", date: "2024-11-22", indoor: true, temp_c: null, tsb: -6, blocks: 1,
+      raw_bpm: 61.4, outlier: true, bpm: null, power_w: null, corrections: { indoor: -4.7, heat: 0, form: -1 }, recovery_bpm: null, drift: null,
+    },
+    normal: { bpm: 142, power_w: 200, rides: 12, bpm_at_conditions: 136, difference_bpm: null },
+    recoveries: [],
+  };
+  render(<HeartRatePowerCard data={data} />);
+  expect(screen.getByText(/likely a heart-rate sensor problem \(left out\)/)).toBeInTheDocument();
+});

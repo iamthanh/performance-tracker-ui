@@ -19,6 +19,10 @@ export function today(now: Date = new Date()): ISODate {
   return toISO(new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())));
 }
 
+/** Days since 1970 and back: a linear time axis for charts, so gaps show as gaps. */
+export const dayNumber = (iso: ISODate) => daysBetween("1970-01-01", iso);
+export const fromDayNumber = (n: number): ISODate => addDays("1970-01-01", Math.round(n));
+
 export function addDays(iso: ISODate, days: number): ISODate {
   const d = parseISO(iso);
   d.setUTCDate(d.getUTCDate() + days);

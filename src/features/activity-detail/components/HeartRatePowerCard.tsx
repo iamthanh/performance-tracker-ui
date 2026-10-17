@@ -8,12 +8,13 @@ import { elapsedLabel, num, signed } from "@/lib/format";
 
 type Block = RideCardio["blocks"][number];
 
-/** Why a steady block is left out of the ride's value. */
-function leftOut(b: Block, band: [number, number]): string | null {
+/** Why a steady block is left out of the ride's value (`outlier`: the whole ride is). */
+function leftOut(b: Block, band: [number, number], outlier: boolean): string | null {
+  if (outlier) return "the ride is left out (far from your other rides)";
   if (b.used) return null;
   if (b.warm_up) return "in the first 20 min (warming up)";
   if (b.watts < band[0] || b.watts > band[1]) return "too far from the reference power";
-  return "left out";
+  return "only one block near the reference power (needs 2)";
 }
 
 /** The ride's steady riding as heart rate against power, against your recent normal at the same conditions: how
@@ -24,8 +25,9 @@ export function HeartRatePowerCard({ data }: { data: RideCardio }) {
   if (!model) return null;
   const ref = model.reference;
   const band: [number, number] = [ref.power_w * 0.65, ref.power_w * 1.35];
-  const used = data.blocks.filter((b) => b.used);
-  const other = data.blocks.filter((b) => !b.used);
+  const outlier = !!ride?.outlier;
+  const used = data.blocks.filter((b) => b.used && !outlier);
+  const other = data.blocks.filter((b) => !b.used || outlier);
   const watts = data.blocks.map((b) => b.watts);
   const lo = Math.min(band[0], ...watts);
   const hi = Math.max(band[1], ...watts);
@@ -47,7 +49,7 @@ export function HeartRatePowerCard({ data }: { data: RideCardio }) {
         { label: "This ride", color: c["series-1"] },
         { label: "Your normal, at this ride's conditions", color: c["series-2"] },
       ]}
-      table={() => <BlockTable blocks={data.blocks} band={band} />}
+      table={() => <BlockTable blocks={data.blocks} band={band} outlier={outlier} />}
     >
       <div className="tiles" style={{ marginBottom: 12 }}>
         <StatTile
@@ -102,7 +104,7 @@ export function HeartRatePowerCard({ data }: { data: RideCardio }) {
                     { name: "Heart rate", value: `${num(b.bpm, 1)} bpm`, color: b.used ? c["series-1"] : c["text-muted"] },
                     { name: "Work before", value: `${num(b.kj_before)} kJ` },
                     ...(b.temp_c !== null ? [{ name: "Temperature", value: `${num(b.temp_c, 1)} °C` }] : []),
-                    ...(leftOut(b, band) ? [{ name: "Left out", value: leftOut(b, band)! }] : []),
+                    ...(leftOut(b, band, outlier) ? [{ name: "Left out", value: leftOut(b, band, outlier)! }] : []),
                   ]}
                 />
               ))}
@@ -125,7 +127,7 @@ export function HeartRatePowerCard({ data }: { data: RideCardio }) {
 }
 
 /** Table twin: every steady block, in ride order. */
-function BlockTable({ blocks, band }: { blocks: Block[]; band: [number, number] }) {
+function BlockTable({ blocks, band, outlier }: { blocks: Block[]; band: [number, number]; outlier: boolean }) {
   return (
     <DataTable
       rows={blocks}
@@ -136,7 +138,7 @@ function BlockTable({ blocks, band }: { blocks: Block[]; band: [number, number] 
         { key: "bpm", header: "Heart rate", cell: (b) => num(b.bpm, 1) },
         { key: "kj", header: "Work before (kJ)", cell: (b) => num(b.kj_before) },
         { key: "temp", header: "°C", cell: (b) => num(b.temp_c, 1) },
-        { key: "used", header: "Counted", cell: (b) => (b.used ? "yes" : leftOut(b, band)), headerClassName: "left", cellClassName: "left secondary" },
+        { key: "used", header: "Counted", cell: (b) => leftOut(b, band, outlier) ?? "yes", headerClassName: "left", cellClassName: "left secondary" },
       ]}
     />
   );

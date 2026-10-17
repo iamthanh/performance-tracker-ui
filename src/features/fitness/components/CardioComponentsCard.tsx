@@ -18,7 +18,9 @@ const TOKENS: Record<CardioComponent, Token> = { aerobic: "series-1", resting_hr
 export function CardioComponentsCard({ cardio, days }: { cardio: Cardio; days: CardioDay[] }) {
   const latest = days[days.length - 1]!;
   const tick = dateTickFormatter(daysBetween(days[0]!.date, latest.date));
-  const total = Object.values(cardio.weights).reduce((t, w) => t + w, 0) || 1;
+  // As the score: over the scored components with a value today (resting HR waits for the watch).
+  const present = (Object.keys(cardio.weights) as CardioScored[]).filter((k) => latest.components[k].index !== null);
+  const total = present.reduce((t, k) => t + cardio.weights[k], 0) || 1;
   return (
     <Card label="Cardio components">
       <CardHeader
@@ -31,7 +33,7 @@ export function CardioComponentsCard({ cardio, days }: { cardio: Cardio; days: C
           const series = days.map((d) => ({ date: d.date, value: scored ? d.components[k.key].index : d.components[k.key].value }));
           const value = latest.components[k.key].value;
           const hasAny = series.some((p) => p.value !== null);
-          const share = scored ? (cardio.weights[k.key as CardioScored] / total) * 100 : null;
+          const share = scored ? (present.includes(k.key as CardioScored) ? (cardio.weights[k.key as CardioScored] / total) * 100 : 0) : null;
           return (
             <MiniChart
               key={k.key}

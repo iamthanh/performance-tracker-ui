@@ -16,16 +16,14 @@ import {
   Y_AXIS_WIDTH,
 } from "@/components";
 import { useColors } from "@/hooks";
-import { dateTickFormatter, formatDay, formatFullDay } from "@/lib/dates";
+import { dateTickFormatter, dayNumber, formatDay, formatFullDay, fromDayNumber } from "@/lib/dates";
 import { correctionParts } from "@/lib/cardio";
 import { num, signed } from "@/lib/format";
 
 import {
   cardioPoints,
   LOWER_IS_FITTER,
-  dayNumber,
   fitness,
-  fromDayNumber,
   VIEW_LABELS,
   viewValue,
   weeklyRows,
@@ -52,9 +50,9 @@ export function CardioCard({ cardio, model, days, refetching }: { cardio: Cardio
   const units: Record<CardioView, string> = { hr: "bpm", power: "W", score: "", vo2max: "ml/kg/min" };
   const digits = view === "power" ? 0 : 1;
   const range = change(days.map((d) => viewValue(d, view)));
-  const direction = fitness(range.delta, view);
+  const direction = fitness(range.delta, view, digits);
   const points = cardioPoints(days, cardio.rides, view);
-  const start = days[0]!.date;
+  const start = points[0]?.date ?? days[0]!.date;
   const end = days[days.length - 1]!.date;
   const tick = dateTickFormatter(dayNumber(end) - dayNumber(start));
   const basis = latest.vo2max_basis;
@@ -95,7 +93,7 @@ export function CardioCard({ cardio, model, days, refetching }: { cardio: Cardio
           label="Estimated VO2max"
           value={num(latest.vo2max, 1)}
           unit="ml/kg/min"
-          hint={basis ? `${RESTING_SOURCE[basis.resting]} ${num(basis.resting_hr)} · max HR ${num(basis.max_hr)}` : "needs your weight"}
+          hint={basis ? `${RESTING_SOURCE[basis.resting]} ${num(basis.resting_hr)} · max HR ${num(basis.max_hr)}` : "needs your weight and max HR"}
         />
         <StatTile
           label="Change in this range"
@@ -164,7 +162,7 @@ function PointTooltip({
             correctionParts(r).length ? ` (${correctionParts(r).join(", ")})` : ""
           }`,
         })),
-        ...(p.source.tsb !== null ? [{ name: "Form (TSB)", value: signed(p.source.tsb, 0) }] : []),
+        ...(p.source?.tsb != null ? [{ name: "Form (TSB)", value: signed(p.source.tsb, 0) }] : []),
       ]}
     />
   );

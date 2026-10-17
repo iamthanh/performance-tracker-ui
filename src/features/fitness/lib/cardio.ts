@@ -1,9 +1,5 @@
 import type { CardioDay, CardioRide } from "@/api";
-import { addDays, daysBetween, type ISODate } from "@/lib/dates";
-
-/** Days since 1970 and back, for a numeric date axis (the rides' dots and the line share it). */
-export const dayNumber = (iso: ISODate) => daysBetween("1970-01-01", iso);
-export const fromDayNumber = (n: number): ISODate => addDays("1970-01-01", Math.round(n));
+import { dayNumber } from "@/lib/dates";
 
 /** What the main cardio chart shows. */
 export type CardioView = "hr" | "power" | "score" | "vo2max";
@@ -32,23 +28,28 @@ export type CardioPoint = {
   /** The mean of the day's rides, corrected (a dot; heart rate and power views only). */
   ride: number | null;
   rides: CardioRide[];
-  source: CardioDay;
+  /** The window's day (null on a day with a ride before the line starts). */
+  source: CardioDay | null;
 };
 
-/** One point per day of the range: the line, and the day's rides as a dot. */
+/** One point per day: the line, and the day's rides as a dot (rides before the line starts, while its first window
+ *  fills, get points of their own). */
 export function cardioPoints(days: CardioDay[], rides: CardioRide[], view: CardioView): CardioPoint[] {
   const byDate = new Map<string, CardioRide[]>();
   for (const r of rides) {
     if (r.bpm === null) continue;
     byDate.set(r.date, [...(byDate.get(r.date) ?? []), r]);
   }
-  return days.map((d) => {
-    const own = byDate.get(d.date) ?? [];
+  const byDay = new Map(days.map((d) => [d.date, d]));
+  const dates = [...new Set([...byDay.keys(), ...(view === "hr" || view === "power" ? byDate.keys() : [])])].sort();
+  return dates.map((date) => {
+    const d = byDay.get(date) ?? null;
+    const own = byDate.get(date) ?? [];
     const values = own.map((r) => (view === "hr" ? r.bpm : view === "power" ? r.power_w : null)).filter((v): v is number => v !== null);
     return {
-      day: dayNumber(d.date),
-      date: d.date,
-      value: viewValue(d, view),
+      day: dayNumber(date),
+      date,
+      value: d ? viewValue(d, view) : null,
       ride: values.length ? values.reduce((a, b) => a + b, 0) / values.length : null,
       rides: own,
       source: d,
@@ -56,9 +57,9 @@ export function cardioPoints(days: CardioDay[], rides: CardioRide[], view: Cardi
   });
 }
 
-/** "fitter" / "less fit" for a change of a view's value (null under `minimum`). */
-export function fitness(delta: number | null, view: CardioView, minimum = 0.05): "fitter" | "less fit" | null {
-  if (delta === null || Math.abs(delta) < minimum) return null;
+/** "fitter" / "less fit" for a change of a view's value (null when it rounds to 0 at `digits`). */
+export function fitness(delta: number | null, view: CardioView, digits = 1): "fitter" | "less fit" | null {
+  if (delta === null || Math.abs(delta) < 0.5 * 10 ** -digits) return null;
   return delta < 0 === LOWER_IS_FITTER[view] ? "fitter" : "less fit";
 }
 

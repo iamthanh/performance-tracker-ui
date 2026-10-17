@@ -8,7 +8,6 @@ import { formatFullDay } from "@/lib/dates";
 import { num, signed } from "@/lib/format";
 import { activityPath } from "@/lib/paths";
 
-
 const SHOWN = 10;
 
 /** How heart rate is put on the same footing (what was fitted to your rides), and each ride's value before and
@@ -18,7 +17,9 @@ export function CardioModelCard({ model, rides }: { model: CardioModel; rides: C
   const c = model.corrections;
   const ref = model.reference;
   const fitted = (key: keyof CardioModel["fitted"]) => (model.fitted[key] ? "" : " (default: too few rides to fit)");
-  const valued = rides.filter((r) => r.bpm !== null).reverse();
+  const valued = rides.filter((r) => r.raw_bpm !== null).reverse();
+  const auto = ref.power_auto && ref.hr_auto ? " (automatic: the median of your steady riding; change it in Settings)"
+    : ref.power_auto || ref.hr_auto ? ` (${ref.power_auto ? "power" : "heart rate"} automatic, the other set in Settings)` : " (set in Settings)";
   return (
     <Card label="How the cardio index is measured">
       <CardHeader
@@ -30,7 +31,7 @@ export function CardioModelCard({ model, rides }: { model: CardioModel; rides: C
       <ul className="small" style={{ marginTop: 0 }}>
         <li>
           <strong>Reference:</strong> {num(ref.power_w)} W and {num(ref.hr_bpm)} bpm
-          {ref.power_auto || ref.hr_auto ? " (automatic: the median of your steady riding; change it in Settings)" : " (set in Settings)"}.
+          {auto}.
         </li>
         <li>
           <strong>Same power:</strong> {num(model.slope_bpm_per_w, 2)} bpm per W within a ride (1 bpm ≈ {num(1 / model.slope_bpm_per_w, 1)} W)
@@ -67,7 +68,7 @@ export function CardioModelCard({ model, rides }: { model: CardioModel; rides: C
                 {
                   key: "why",
                   header: "Conditions",
-                  cell: (r) => correctionParts(r).join(", ") || "—",
+                  cell: (r) => (r.outlier ? "left out: far from your other rides (a sensor problem?)" : correctionParts(r).join(", ") || "—"),
                   headerClassName: "left",
                   cellClassName: "left secondary",
                 },

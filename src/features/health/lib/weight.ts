@@ -1,10 +1,8 @@
 import type { WeightDay, WeightKind } from "@/api";
-import { addDays, daysBetween, type ISODate } from "@/lib/dates";
+import { dayNumber, daysBetween, type ISODate } from "@/lib/dates";
 import { fromKg, type WeightUnit } from "@/lib/nutrition";
 
-/** Days since 1970: a linear time axis, so gaps show as gaps. */
-export const dayNumber = (iso: ISODate) => daysBetween("1970-01-01", iso);
-export const fromDayNumber = (n: number): ISODate => addDays("1970-01-01", Math.round(n));
+export { dayNumber, fromDayNumber } from "@/lib/dates";
 
 export const KIND_LABEL: Record<WeightKind, string> = {
   weigh_in: "Weigh-in",
