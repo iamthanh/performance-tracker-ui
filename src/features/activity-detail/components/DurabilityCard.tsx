@@ -1,31 +1,60 @@
+import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import type { Durability, RideWeight } from "@/api";
-import { axisProps, CHART_MARGIN, ChartCard, DataTable, gridProps, lineCursor, tooltipContent, TooltipBox, Y_AXIS_WIDTH } from "@/components";
+import {
+  axisProps,
+  CHART_MARGIN,
+  ChartCard,
+  DataTable,
+  gridProps,
+  lineCursor,
+  Segmented,
+  tooltipContent,
+  TooltipBox,
+  Y_AXIS_WIDTH,
+} from "@/components";
 import { useColors } from "@/hooks";
 import { durationLabel, isNum, num, pct } from "@/lib/format";
 import type { Token } from "@/lib/theme";
 
 import { durabilityChart, durabilityRows, stepLabel, stepTicks, stepText, worstFade, wPerKg, type DurabilityRow } from "../lib/insights";
 
-// Fixed identity per duration, in the categorical order.
+// Six lines in one chart cannot all be told apart (validated palette: neighbouring hues collide), so the chart
+// shows three durations at a time in the validated categorical order; the table always has all six.
+const GROUPS = {
+  short: { label: "1–8 min", durations: [60, 300, 480] },
+  long: { label: "10–20 min", durations: [600, 900, 1200] },
+} as const;
+type Group = keyof typeof GROUPS;
 const LINE_TOKENS: Token[] = ["series-1", "series-2", "series-3"];
 
-/** Best 1, 5 and 20 minutes after the ride had done 10, 20 ... kJ/kg of work, as a share of the same efforts
+/** Best 1, 5, 8, 10, 15 and 20 minutes after the ride had done 100, 200 ... kJ of work, as a share of the same efforts
  *  from the start: how well the rider resists fatigue (durability). */
 export function DurabilityCard({ durability: d, weight }: { durability: Durability; weight: RideWeight | null }) {
   const c = useColors();
+  const [group, setGroup] = useState<Group>("short");
   const rows = durabilityRows(d);
+  const shown = rows.filter((r) => (GROUPS[group].durations as readonly number[]).includes(r.duration_s));
+  const colorOf = (r: DurabilityRow) => c[LINE_TOKENS[shown.indexOf(r)] ?? "text-muted"];
   const data = durabilityChart(d);
   const fade = worstFade(d);
   // A fixed floor of 90 % (lower when the fade is bigger), so a 2 % fade does not fill the chart.
-  const low = Math.min(90, Math.floor(Math.min(...rows.flatMap((r) => r.cells.map((x) => x.ofFresh ?? 100))) / 5) * 5);
+  const low = Math.min(90, Math.floor(Math.min(...shown.flatMap((r) => r.cells.map((x) => x.ofFresh ?? 100))) / 5) * 5);
   const spacing = 100 - low > 40 ? 10 : 5;
   const ticks = Array.from({ length: Math.floor((100 - low) / spacing) + 1 }, (_, i) => 100 - i * spacing).reverse();
   const kg = weight?.kg ?? null;
   const last = d.steps[d.steps.length - 1] ?? 0;
   const dots = d.steps.length <= 15; // many 100 kJ steps read better as plain lines
-  const legend = rows.map((r, i) => ({ label: `Best ${durationLabel(r.duration_s)}`, color: c[LINE_TOKENS[i % LINE_TOKENS.length]!] }));
+  const legend = shown.map((r) => ({ label: `Best ${durationLabel(r.duration_s)}`, color: colorOf(r) }));
+  const picker = (
+    <Segmented
+      label="Durations"
+      value={group}
+      onChange={setGroup}
+      options={(Object.keys(GROUPS) as Group[]).map((g) => ({ value: g, label: GROUPS[g].label }))}
+    />
+  );
   const subtitle = (
     <>
       Your best efforts after the ride had already done this much work ({num(d.total)} {d.unit} in all), as a share of the same effort from the
@@ -35,7 +64,7 @@ export function DurabilityCard({ durability: d, weight }: { durability: Durabili
     </>
   );
   return (
-    <ChartCard title="Durability" subtitle={subtitle} legend={legend} table={() => <DurabilityTable d={d} rows={rows} kg={kg} />}>
+    <ChartCard title="Durability" subtitle={subtitle} legend={legend} actions={picker} table={() => <DurabilityTable d={d} rows={rows} kg={kg} />}>
       {d.steps.length < 2 ? (
         <p className="small muted">The ride was too short to compare fresh and fatigued efforts.</p>
       ) : (
@@ -57,19 +86,19 @@ export function DurabilityCard({ durability: d, weight }: { durability: Durabili
               content={tooltipContent<Record<string, number | null>>((p) => (
                 <TooltipBox
                   title={stepLabel(p.step!, d.unit, kg)}
-                  rows={rows.map((r, i) => ({
+                  rows={shown.map((r) => ({
                     name: `Best ${durationLabel(r.duration_s)}`,
                     value: cellText(r.cells[d.steps.indexOf(p.step!)]!),
-                    color: c[LINE_TOKENS[i % LINE_TOKENS.length]!],
+                    color: colorOf(r),
                   }))}
                 />
               ))}
             />
-            {rows.map((r, i) => (
+            {shown.map((r) => (
               <Line
                 key={r.duration_s}
                 dataKey={`d${r.duration_s}`}
-                stroke={c[LINE_TOKENS[i % LINE_TOKENS.length]!]}
+                stroke={colorOf(r)}
                 strokeWidth={2}
                 dot={dots ? { r: 4, strokeWidth: 2, fill: c["surface-1"] } : false}
                 activeDot={{ r: 4, strokeWidth: 2, fill: c["surface-1"] }}

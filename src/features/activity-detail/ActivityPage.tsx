@@ -46,12 +46,9 @@ export function ActivityPage() {
         {m && m.power_curve.length ? <PeakPowerCard detail={d} kg={kg} /> : null}
         {streams.data?.lat && streams.data.lng ? <RouteCard lat={streams.data.lat} lng={streams.data.lng} /> : null}
       </div>
-      {ins?.durability || ins?.w_prime ? (
-        <div className="grid two">
-          {ins.durability ? <DurabilityCard durability={ins.durability} weight={ins.weight} /> : null}
-          {ins.w_prime ? <WPrimeCard w={ins.w_prime} /> : null}
-        </div>
-      ) : null}
+      {/* Full width: six durations in the table, a duration picker in the header. */}
+      {ins?.durability ? <DurabilityCard durability={ins.durability} weight={ins.weight} /> : null}
+      {ins?.w_prime ? <WPrimeCard w={ins.w_prime} /> : null}
       {ins?.efforts ? <EffortsCard efforts={ins.efforts} kg={kg} /> : null}
       <FuelingCard source={d.activity.source} sourceId={d.activity.source_id} date={d.activity.local_date} />
       {d.laps.length > 1 ? <LapsTable laps={d.laps} running={d.activity.sport === "running"} /> : null}
