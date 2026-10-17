@@ -2,8 +2,6 @@ import type { BodyMeasurement } from "@/api";
 import { addDays, daysBetween, type ISODate } from "@/lib/dates";
 import { fromKg, type WeightUnit } from "@/lib/nutrition";
 
-import { onePerDay } from "./series";
-
 /** A day's weigh-in (kg) with the average of the week up to it, and the day as a number for a time axis. */
 export type WeightPoint = { date: ISODate; day: number; kg: number; avgKg: number; source: string };
 
@@ -11,24 +9,42 @@ export type WeightPoint = { date: ISODate; day: number; kg: number; avgKg: numbe
 export const dayNumber = (iso: ISODate) => daysBetween("1970-01-01", iso);
 export const fromDayNumber = (n: number): ISODate => addDays("1970-01-01", Math.round(n));
 
-/** One weigh-in per day (the preferred source's), oldest first, each with the average of the weigh-ins of the
- *  7 days up to it, the smoothing the ride pages use. */
+/** One weight per day (the average of every source's, as the ride pages take it), oldest first, each with the
+ *  average of the days' weights over the 7 days up to it. */
 export function weightPoints(rows: BodyMeasurement[]): WeightPoint[] {
-  const days = onePerDay(
-    rows.filter((r) => r.metric === "weight_kg" && r.value > 0),
-    (r) => r.ts.slice(0, 10),
-    (r) => r.source,
-    (r) => r.ts,
-  );
-  const out: WeightPoint[] = [];
-  let from = 0;
-  let sum = 0;
-  for (let i = 0; i < days.length; i++) {
-    const date = days[i]!.ts.slice(0, 10);
-    sum += days[i]!.value;
-    while (daysBetween(days[from]!.ts.slice(0, 10), date) > 6) sum -= days[from++]!.value;
-    out.push({ date, day: dayNumber(date), kg: days[i]!.value, avgKg: sum / (i - from + 1), source: days[i]!.source });
+  const byDay = new Map<string, { sum: number; n: number; sources: Set<string> }>();
+  for (const r of rows) {
+    if (r.metric !== "weight_kg" || !(r.value > 0)) continue;
+    const date = r.ts.slice(0, 10);
+    const day = byDay.get(date) ?? { sum: 0, n: 0, sources: new Set<string>() };
+    day.sum += r.value;
+    day.n += 1;
+    day.sources.add(r.source);
+    byDay.set(date, day);
   }
+  const days = [...byDay.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, d]) => ({ date, kg: d.sum / d.n, source: [...d.sources].sort().join(", ") }));
+  const out: WeightPoint[] = [];
+  let from = 0; // the first day of the 7 up to day i
+  let sum = 0;
+  days.forEach((d, i) => {
+    sum += d.kg;
+    while (daysBetween(days[from]!.date, d.date) > 6) sum -= days[from++]!.kg;
+    out.push({ ...d, day: dayNumber(d.date), avgKg: sum / (i - from + 1) });
+  });
+  return out;
+}
+
+/** The weigh-ins as chart points, with a break (no average) wherever more than a week passes between two, so the
+ *  line does not draw a trend across a gap. */
+export function withBreaks<T extends { day: number }>(points: T[], gapDays = 7): (T | { day: number; avg: null })[] {
+  const out: (T | { day: number; avg: null })[] = [];
+  points.forEach((p, i) => {
+    const before = points[i - 1];
+    if (before && p.day - before.day > gapDays) out.push({ day: (before.day + p.day) / 2, avg: null });
+    out.push(p);
+  });
   return out;
 }
 

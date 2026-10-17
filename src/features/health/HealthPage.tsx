@@ -31,10 +31,7 @@ export function HealthPage() {
           Connect Garmin for resting heart rate, HRV, sleep and all-day heart rate: in the backend repo run{" "}
           <code>fitness-hub auth garmin</code>, then <code>fitness-hub sync --source garmin</code>.
         </EmptyCard>
-      ) : null}
-      {/* Even when the range has nothing else: the weight card has its own range. */}
-      {health.empty ? <WeightCard /> : null}
-      {health.loading || health.empty ? null : (
+      ) : (
         <>
           <HealthTiles
             end={range.end}
@@ -44,7 +41,6 @@ export function HealthPage() {
             nights={health.nights}
             weight={health.weight}
           />
-
           <ChartCard
             title="Form"
             subtitle="Training stress balance, for context: recovery markers usually worsen when form is low"
@@ -52,15 +48,20 @@ export function HealthPage() {
           >
             <DailyLineChart data={health.form} token="series-1" unit="" zero syncId="health" />
           </ChartCard>
-          {/* On its own range (all time by default): weigh-ins come in spells the page's range often misses. */}
-          <WeightCard />
+        </>
+      )}
+
+      {/* Always here, on its own range (all time by default): weigh-ins come in spells the page's range often
+          misses. One instance, so its range survives changes of the page's. */}
+      <WeightCard />
+
+      {health.loading || health.empty ? null : (
+        <>
           <div className="grid two">
             <MetricCard title="Resting heart rate" unit="bpm" data={health.resting} token="series-8" />
             <MetricCard title="Heart-rate variability" unit="ms" data={health.hrv} token="series-7" subtitle="Nightly RMSSD" />
           </div>
-
           <SleepCard nights={health.nights} refetching={health.sleep.isFetching} />
-
           <DayHeartRateCard />
         </>
       )}

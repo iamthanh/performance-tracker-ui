@@ -8,6 +8,7 @@ import {
   ChartCard,
   DataTable,
   ErrorState,
+  Loading,
   gridProps,
   lineCursor,
   Segmented,
@@ -17,11 +18,11 @@ import {
   Y_AXIS_WIDTH,
 } from "@/components";
 import { useColors } from "@/hooks";
-import { addDays, EARLIEST, formatDay, formatFullDay, formatShortMonth, today } from "@/lib/dates";
+import { addDays, dateTickFormatter, EARLIEST, formatFullDay, today } from "@/lib/dates";
 import { num, signed } from "@/lib/format";
 import { fromKg, saveWeightUnit, storedWeightUnit, type WeightUnit } from "@/lib/nutrition";
 
-import { between, dayNumber, fromDayNumber, weightPoints, weightStats, type WeightPoint } from "../lib/weight";
+import { between, dayNumber, fromDayNumber, weightPoints, weightStats, withBreaks, type WeightPoint } from "../lib/weight";
 
 type Span = "1y" | "2y" | "all";
 const SPANS: { value: Span; label: string }[] = [
@@ -43,14 +44,14 @@ export function WeightCard() {
   const shown = between(all, start, end);
   const stats = weightStats(shown, unit);
   const lastEver = all[all.length - 1];
-  const yearly = dayNumber(end) - dayNumber(start) > 400;
-  const tick = (d: number) => (yearly ? formatShortMonth(fromDayNumber(d)) : formatDay(fromDayNumber(d)));
-  const data = shown.map((p) => ({ ...p, w: fromKg(p.kg, unit), avg: fromKg(p.avgKg, unit) }));
+  const format = dateTickFormatter(dayNumber(end) - dayNumber(start)); // as the other date charts
+  const tick = (d: number) => format(fromDayNumber(d));
+  const data = withBreaks(shown.map((p) => ({ ...p, w: fromKg(p.kg, unit), avg: fromKg(p.avgKg, unit) })));
 
   return (
     <ChartCard
       title="Weight"
-      subtitle="Every weigh-in (dots) and the average of the week up to it (line), which ride pages use for W/kg"
+      subtitle="Every day's weight (dots) and the average of the week up to it (line): what ride pages use for W/kg, unless you weighed in for the ride"
       refetching={body.isFetching}
       legend={[
         { label: "Weigh-in", color: c["series-1"], shape: "dot" },
@@ -77,17 +78,19 @@ export function WeightCard() {
     >
       {body.isError ? (
         <ErrorState error={body.error} />
+      ) : body.isPending ? (
+        <Loading label="Loading weigh-ins…" />
       ) : !stats ? (
         <p className="small muted">
           {lastEver
             ? `No weigh-ins in this range: the latest is from ${formatFullDay(lastEver.date)}. Pick “All time”.`
-            : "No weigh-ins yet. Import a log with fitness-hub import-weight-csv, or weigh in around a workout on its page."}
+            : "No weigh-ins yet. Import a log with fitness-hub import-weight-csv (or sync a scale through Garmin or Google)."}
         </p>
       ) : (
         <>
           <div className="tiles" style={{ marginBottom: 12 }}>
             <StatTile label="Latest weigh-in" value={num(stats.latest, 1)} unit={unit} hint={formatFullDay(stats.latestDate)} />
-            <StatTile label="7-day average" value={num(stats.average, 1)} unit={unit} hint="what rides use" />
+            <StatTile label="7-day average" value={num(stats.average, 1)} unit={unit} hint="what a ride that day uses" />
             <StatTile label="Change in this range" value={signed(stats.change, 1)} unit={unit} hint="7-day average, first to last" />
             <StatTile label="Range" value={`${num(stats.low, 1)}–${num(stats.high, 1)}`} unit={unit} hint={`${num(stats.count)} weigh-ins`} />
           </div>
@@ -105,7 +108,8 @@ export function WeightCard() {
               <YAxis {...axisProps(c)} width={Y_AXIS_WIDTH} domain={["auto", "auto"]} tickFormatter={(v: number) => num(v)} />
               <Tooltip
                 cursor={lineCursor(c)}
-                content={tooltipContent<WeightPoint & { w: number; avg: number }>((p) => (
+                content={tooltipContent<WeightPoint & { w: number; avg: number }>((p) =>
+                  p.date ? (
                   <TooltipBox
                     title={formatFullDay(p.date)}
                     rows={[
@@ -113,10 +117,11 @@ export function WeightCard() {
                       { name: "7-day average", value: `${num(p.avg, 1)} ${unit}` },
                     ]}
                   />
-                ))}
+                  ) : null, // a break in the line, not a weigh-in
+                )}
               />
               <Scatter dataKey="w" fill={c["series-1"]} shape={<WeighIn opacity={data.length > 200 ? 0.25 : 0.5} />} isAnimationActive={false} />
-              <Line dataKey="avg" stroke={c["series-1"]} strokeWidth={2} dot={false} isAnimationActive={false} />
+              <Line dataKey="avg" stroke={c["series-1"]} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
             </ComposedChart>
           </ResponsiveContainer>
         </>
