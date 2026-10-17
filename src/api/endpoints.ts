@@ -22,6 +22,7 @@ import type {
   Summary,
   ThresholdMetric,
   Thresholds,
+  WorkoutWeight,
 } from "./types";
 
 const enc = encodeURIComponent;
@@ -65,4 +66,6 @@ export const api = {
   deleteEntry: (id: number) => request<void>(`/nutrition/entries/${id}`, { method: "DELETE" }),
   nutritionDaily: (p: { start_date: string; end_date: string }) => request<NutritionDay[]>(`/nutrition/daily${query(p)}`),
   fueling: (source: string, id: string) => request<Fueling>(`/activities/${enc(source)}/${enc(id)}/fueling`),
+  setWorkoutWeight: (source: string, id: string, body: { pre_kg: number | null; post_kg: number | null; note?: string | null }) =>
+    request<WorkoutWeight>(`/activities/${enc(source)}/${enc(id)}/weight`, json("PUT", body)),
 };

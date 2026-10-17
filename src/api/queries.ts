@@ -113,5 +113,10 @@ export function useNutritionMutations() {
     createEntry: useMutation({ mutationFn: (body: EntryInput) => api.createEntry(body), onSuccess }),
     updateEntry: useMutation({ mutationFn: ({ id, body }: { id: number; body: EntryInput }) => api.updateEntry(id, body), onSuccess }),
     deleteEntry: useMutation({ mutationFn: (id: number) => api.deleteEntry(id), onSuccess }),
+    setWorkoutWeight: useMutation({
+      mutationFn: ({ source, id, pre_kg, post_kg }: { source: string; id: string; pre_kg: number | null; post_kg: number | null }) =>
+        api.setWorkoutWeight(source, id, { pre_kg, post_kg }),
+      onSuccess,
+    }),
   };
 }
