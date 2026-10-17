@@ -1,5 +1,3 @@
-import type { KeyboardEvent } from "react";
-
 import type { BestEffort } from "@/api";
 import { Card, CardHeader, DataTable, type Column } from "@/components";
 import { duration, durationLabel, num, withUnit } from "@/lib/format";
@@ -25,7 +23,26 @@ export function BestEffortsCard({
   const isSelected = (e: BestEffort) => selected?.label === label(e) && selected.start_s === e.start_s;
   const toggle = (e: BestEffort) => onSelect(isSelected(e) ? null : { start_s: e.start_s, end_s: e.end_s, label: label(e) });
   const columns: Column<BestEffort>[] = [
-    { key: "d", header: "Duration", cell: (e) => durationLabel(e.duration_s), headerClassName: "left", cellClassName: "left" },
+    {
+      key: "d",
+      header: "Duration",
+      cell: (e) => (
+        <button
+          type="button"
+          className="btn ghost small"
+          aria-pressed={isSelected(e)}
+          aria-label={`${label(e)}: mark on the charts`}
+          onClick={(ev) => {
+            ev.stopPropagation(); // the row's own click would toggle it back
+            toggle(e);
+          }}
+        >
+          {durationLabel(e.duration_s)}
+        </button>
+      ),
+      headerClassName: "left",
+      cellClassName: "left",
+    },
     { key: "w", header: "Avg power", cell: (e) => withUnit(e.avg_power_w, "W") },
     ...(kg ? [{ key: "wkg", header: "W/kg", cell: (e: BestEffort) => wPerKg(e.avg_power_w, kg).replace(" W/kg", "") }] : []),
     { key: "when", header: "When", cell: (e) => `${duration(e.start_s)} – ${duration(e.end_s)}` },
@@ -48,18 +65,8 @@ export function BestEffortsCard({
           columns={columns}
           rows={efforts}
           rowKey={(e) => e.duration_s}
-          rowProps={(e) => ({
-            className: "clickable",
-            tabIndex: 0,
-            "aria-selected": isSelected(e),
-            onClick: () => toggle(e),
-            onKeyDown: (ev: KeyboardEvent<HTMLTableRowElement>) => {
-              if (ev.key === "Enter" || ev.key === " ") {
-                ev.preventDefault();
-                toggle(e);
-              }
-            },
-          })}
+          // The whole row is a mouse target; keyboard and screen readers use the button in its first cell.
+          rowProps={(e) => ({ className: isSelected(e) ? "clickable selected" : "clickable", onClick: () => toggle(e) })}
         />
       </div>
     </Card>

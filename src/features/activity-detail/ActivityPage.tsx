@@ -28,7 +28,11 @@ export function ActivityPage() {
   const hasStreams = !!detail.data?.streams;
   const streams = useStreams(source, id, hasStreams);
   const insights = useInsights(source, id);
-  const [highlight, setHighlight] = useState<Highlight | null>(null);
+  // Kept with the activity it belongs to, so it never shows on the next one (the route reuses this page).
+  const [mark, setMark] = useState<{ activity: string; highlight: Highlight } | null>(null);
+  const activityKey = `${source}/${id}`;
+  const highlight = mark?.activity === activityKey ? mark.highlight : null;
+  const setHighlight = (h: Highlight | null) => setMark(h ? { activity: activityKey, highlight: h } : null);
 
   if (detail.isError) return <ErrorCard error={detail.error} />;
   if (detail.isPending) return <LoadingCard />;
@@ -56,8 +60,7 @@ export function ActivityPage() {
           selected={highlight}
           onSelect={(h) => {
             setHighlight(h);
-            // Show the marked stretch: the charts are at the top of the page.
-            if (h) document.querySelector('[aria-label="Workout charts"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+            if (h) showMarkedStretch();
           }}
         />
       ) : null}
@@ -77,4 +80,11 @@ export function ActivityPage() {
       {d.laps.length > 1 ? <LapsTable laps={d.laps} running={d.activity.sport === "running"} /> : null}
     </>
   );
+}
+
+/** Scroll the charts (top of the page) into view and move focus to the mark's clear button there. */
+function showMarkedStretch() {
+  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  document.querySelector('[aria-label="Workout charts"]')?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('[aria-label="Clear the marked stretch"]')?.focus({ preventScroll: true }));
 }

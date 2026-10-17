@@ -61,10 +61,10 @@ it("lists best efforts with heart rate and marks the picked one", () => {
   const { rerender } = render(<BestEffortsCard efforts={efforts} kg={66} selected={null} onSelect={(h) => picks.push(h)} />);
   expect(screen.getByText("171")).toBeInTheDocument(); // max HR of the best 30 s
   expect(screen.getByText("5.00")).toBeInTheDocument(); // 330 W at 66 kg
-  fireEvent.click(screen.getByText("5m"));
+  fireEvent.click(screen.getByRole("button", { name: "Best 5m: mark on the charts" }));
   expect(picks).toEqual([{ start_s: 3500, end_s: 3800, label: "Best 5m" }]);
   rerender(<BestEffortsCard efforts={efforts} kg={66} selected={{ start_s: 3500, end_s: 3800, label: "Best 5m" }} onSelect={(h) => picks.push(h)} />);
-  expect(screen.getByText("5m").closest("tr")).toHaveAttribute("aria-selected", "true");
-  fireEvent.keyDown(screen.getByText("5m").closest("tr")!, { key: "Enter" });
+  expect(screen.getByRole("button", { name: "Best 5m: mark on the charts" })).toHaveAttribute("aria-pressed", "true");
+  fireEvent.click(screen.getByText("330 W")); // anywhere on the row
   expect(picks[1]).toBeNull(); // picking it again clears the mark
 });

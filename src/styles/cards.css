@@ -112,7 +112,7 @@ table.data tbody tr:hover {
 table.data tr.clickable {
   cursor: pointer;
 }
-table.data tr[aria-selected="true"] {
+table.data tr.selected {
   background: var(--surface-hover);
   box-shadow: inset 3px 0 0 var(--series-4);
 }

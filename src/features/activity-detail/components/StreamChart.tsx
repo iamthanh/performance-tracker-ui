@@ -5,7 +5,7 @@ import { useColors } from "@/hooks";
 import { elapsedLabel } from "@/lib/format";
 
 import type { ChannelSpec, StreamRow } from "../lib/channels";
-import type { Highlight } from "../lib/highlight";
+import { visibleSpan, type Highlight } from "../lib/highlight";
 
 /** One channel over the workout. Charts share the hover position (syncId); only the last shows the time axis. */
 export function StreamChart({
@@ -39,9 +39,7 @@ export function StreamChart({
           onMouseLeave={onMouseLeave}
         >
           <CartesianGrid {...gridProps(c)} />
-          {highlight ? (
-            <ReferenceArea x1={highlight.start_s} x2={highlight.end_s} fill={c["series-4"]} fillOpacity={0.14} stroke="none" ifOverflow="hidden" />
-          ) : null}
+          {highlight ? <ReferenceArea {...visibleSpan(highlight, rows)} fill={c["series-4"]} fillOpacity={0.14} stroke="none" ifOverflow="hidden" /> : null}
           <XAxis
             dataKey="t"
             type="number"

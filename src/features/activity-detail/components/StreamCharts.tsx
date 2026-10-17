@@ -34,9 +34,11 @@ export function StreamCharts({
         subtitle="Hover a chart to read every channel at that moment"
         actions={
           highlight ? (
-            <span className="badge" role="status">
+            <span className="badge">
               <i className="key-swatch" style={{ background: "var(--series-4)", opacity: 0.5 }} aria-hidden />
-              {highlight.label}, {duration(highlight.start_s)} – {duration(highlight.end_s)}
+              <span role="status">
+                Marked: {highlight.label}, {duration(highlight.start_s)} – {duration(highlight.end_s)}
+              </span>
               <button type="button" className="btn ghost small" aria-label="Clear the marked stretch" onClick={onClearHighlight}>
                 ✕
               </button>
