@@ -8,7 +8,7 @@ import { channelSpecs, streamRows } from "../lib/channels";
 import { StreamChart } from "./StreamChart";
 import { StreamReadout } from "./StreamReadout";
 
-/** Power, heart rate, cadence, speed and elevation, one chart each, with a shared hover readout. */
+/** Power, W′ balance, heart rate, cadence, speed and elevation, one chart each, with a shared hover readout. */
 export function StreamCharts({ streams, onFoot }: { streams: Streams; onFoot: boolean }) {
   const hover = useHoverIndex();
   const specs = useMemo(() => channelSpecs(onFoot), [onFoot]);

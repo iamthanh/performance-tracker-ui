@@ -14,6 +14,7 @@ import type {
   Fueling,
   Health,
   HeartRateDay,
+  Insights,
   LoadDay,
   NutritionDay,
   NutritionEntry,
@@ -65,6 +66,7 @@ export const api = {
   updateEntry: (id: number, body: EntryInput) => request<NutritionEntry>(`/nutrition/entries/${id}`, json("PUT", body)),
   deleteEntry: (id: number) => request<void>(`/nutrition/entries/${id}`, { method: "DELETE" }),
   nutritionDaily: (p: { start_date: string; end_date: string }) => request<NutritionDay[]>(`/nutrition/daily${query(p)}`),
+  insights: (source: string, id: string) => request<Insights>(`/activities/${enc(source)}/${enc(id)}/insights`),
   fueling: (source: string, id: string) => request<Fueling>(`/activities/${enc(source)}/${enc(id)}/fueling`),
   setWorkoutWeight: (source: string, id: string, body: { pre_kg: number | null; post_kg: number | null; note?: string | null }) =>
     request<WorkoutWeight>(`/activities/${enc(source)}/${enc(id)}/weight`, json("PUT", body)),
