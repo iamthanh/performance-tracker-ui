@@ -370,6 +370,7 @@ export interface WorkoutWeight {
   pre_kg: number | null;
   post_kg: number | null;
   note: string | null;
+  updated_at?: string;
 }
 
 // -- importing a file ------------------------------------------------------------------------

@@ -4,7 +4,7 @@ export type BottleDraft = {
   salt_g: string;
   maltodextrin_g: string;
   sucrose_g: string;
-  other: { name: string; carbs_g: string; sodium_mg: string; caffeine_mg: string }[];
+  other: { name: string; grams: string; carbs_g: string; sodium_mg: string; caffeine_mg: string }[];
 };
 
 const STORAGE_KEY = "pt-last-bottle";
@@ -23,7 +23,13 @@ export function loadLastBottle(): BottleDraft {
       maltodextrin_g: text(saved.maltodextrin_g),
       sucrose_g: text(saved.sucrose_g),
       other: Array.isArray(saved.other)
-        ? saved.other.map((o) => ({ name: text(o?.name), carbs_g: text(o?.carbs_g), sodium_mg: text(o?.sodium_mg), caffeine_mg: text(o?.caffeine_mg) }))
+        ? saved.other.slice(0, 20).map((o) => ({
+            name: text(o?.name),
+            grams: text(o?.grams),
+            carbs_g: text(o?.carbs_g),
+            sodium_mg: text(o?.sodium_mg),
+            caffeine_mg: text(o?.caffeine_mg),
+          }))
         : [],
     };
   } catch {

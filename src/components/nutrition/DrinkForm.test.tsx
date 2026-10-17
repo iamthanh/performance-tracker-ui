@@ -44,10 +44,17 @@ it("logs bottles with their recipe, previews the totals and remembers the recipe
       salt_g: 1.5,
       maltodextrin_g: 60,
       sucrose_g: 48,
-      other: [{ name: "Caffeine powder", carbs_g: null, sodium_mg: null, caffeine_mg: 100 }],
+      other: [{ name: "Caffeine powder", grams: null, carbs_g: null, sodium_mg: null, caffeine_mg: 100 }],
     },
   });
   await waitFor(() => expect(screen.getByLabelText("Bottles")).toHaveValue(1));
   expect(screen.getByLabelText("Water (ml/bottle)")).toHaveValue(750); // the recipe stays for the next bottle
   expect(JSON.parse(localStorage.getItem("pt-last-bottle")!)).toMatchObject({ water_ml: "750", sucrose_g: "48" });
+});
+
+it("starts empty when the remembered recipe is garbage", () => {
+  localStorage.setItem("pt-last-bottle", '{"water_ml": 5, "other": [null, 3]}');
+  renderForm();
+  expect(screen.getByLabelText("Water (ml/bottle)")).toHaveValue(null);
+  expect(screen.getAllByRole("group", { name: /Other ingredient/ })).toHaveLength(2); // rows kept, but blank
 });

@@ -8,6 +8,7 @@ import { Field } from "../controls";
 import { emptyBottle, loadLastBottle, saveLastBottle, type BottleDraft } from "./bottleDraft";
 
 const NUMBER = { type: "number", min: 0, step: "any" } as const;
+const MAX_OTHER = 20; // as the API allows
 
 /** Log bottles drunk during a workout: how many, and what one bottle holds. The last recipe is remembered. */
 export function DrinkForm({ date, activity }: { date: string; activity: { source: string; source_id: string } }) {
@@ -27,7 +28,7 @@ export function DrinkForm({ date, activity }: { date: string; activity: { source
     sucrose_g: n(draft.sucrose_g),
     other: draft.other
       .filter((o) => o.name.trim())
-      .map((o) => ({ name: o.name.trim(), carbs_g: n(o.carbs_g), sodium_mg: n(o.sodium_mg), caffeine_mg: n(o.caffeine_mg) })),
+      .map((o) => ({ name: o.name.trim(), grams: n(o.grams), carbs_g: n(o.carbs_g), sodium_mg: n(o.sodium_mg), caffeine_mg: n(o.caffeine_mg) })),
   };
   const count = Number(bottles) > 0 ? Number(bottles) : 1;
   const totals = bottleTotals(recipe, count);
@@ -60,7 +61,7 @@ export function DrinkForm({ date, activity }: { date: string; activity: { source
     <form onSubmit={submit} aria-label="Log bottles" className="drink-form">
       <div className="filters" style={{ alignItems: "flex-end" }}>
         <Field label="Bottles">
-          <input {...NUMBER} min={0.25} required value={bottles} onChange={(e) => setBottles(e.target.value)} style={{ width: 80 }} />
+          <input {...NUMBER} min={0.25} max={50} required value={bottles} onChange={(e) => setBottles(e.target.value)} style={{ width: 80 }} />
         </Field>
         <Field label="Water (ml/bottle)">
           <input {...NUMBER} value={draft.water_ml} onChange={(e) => set({ water_ml: e.target.value })} style={{ width: 120 }} />
@@ -82,9 +83,12 @@ export function DrinkForm({ date, activity }: { date: string; activity: { source
         </button>
       </div>
       {draft.other.map((o, i) => (
-        <div className="filters drink-other" style={{ alignItems: "flex-end" }} key={i}>
-          <Field label="Other ingredient" style={{ flex: 1, minWidth: 160 }}>
-            <input type="text" required placeholder="e.g. sodium citrate" value={o.name} onChange={(e) => setOther(i, { name: e.target.value })} />
+        <div className="filters drink-other" style={{ alignItems: "flex-end" }} key={i} role="group" aria-label={`Other ingredient ${i + 1}`}>
+          <Field label={draft.other.length > 1 ? `Other ingredient ${i + 1}` : "Other ingredient"} style={{ flex: 1, minWidth: 160 }}>
+            <input type="text" required maxLength={100} placeholder="e.g. sodium citrate" value={o.name} onChange={(e) => setOther(i, { name: e.target.value })} />
+          </Field>
+          <Field label="Amount (g/bottle)">
+            <input {...NUMBER} value={o.grams} onChange={(e) => setOther(i, { grams: e.target.value })} style={{ width: 120 }} />
           </Field>
           <Field label="Carbs (g/bottle)">
             <input {...NUMBER} value={o.carbs_g} onChange={(e) => setOther(i, { carbs_g: e.target.value })} style={{ width: 110 }} />
@@ -101,9 +105,17 @@ export function DrinkForm({ date, activity }: { date: string; activity: { source
         </div>
       ))}
       <div className="filters" style={{ justifyContent: "space-between" }}>
-        <button type="button" className="btn ghost small" onClick={() => set({ other: [...draft.other, { name: "", carbs_g: "", sodium_mg: "", caffeine_mg: "" }] })}>
-          + Other ingredient
-        </button>
+        {draft.other.length < MAX_OTHER ? (
+          <button
+            type="button"
+            className="btn ghost small"
+            onClick={() => set({ other: [...draft.other, { name: "", grams: "", carbs_g: "", sodium_mg: "", caffeine_mg: "" }] })}
+          >
+            + Other ingredient
+          </button>
+        ) : (
+          <span className="small muted">Up to {MAX_OTHER} other ingredients</span>
+        )}
         <button type="button" className="btn ghost small" onClick={() => setDraft(emptyBottle())}>
           Clear recipe
         </button>

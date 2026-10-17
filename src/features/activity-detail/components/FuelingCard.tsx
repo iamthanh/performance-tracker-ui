@@ -64,7 +64,7 @@ function FuelingSummary({ fueling: f, unit }: { fueling: Fueling; unit: WeightUn
         unit="g/h"
         hint={burnedPerHour ? `~${num(burnedPerHour)} g/h burned (estimate)` : undefined}
       />
-      <StatTile label="Fluid" value={num(f.per_hour.fluid_ml)} unit="ml/h" hint={f.drinks ? `${num(f.drinks.bottles, f.drinks.bottles % 1 ? 1 : 0)} bottles` : undefined} />
+      <StatTile label="Fluid" value={num(f.per_hour.fluid_ml)} unit="ml/h" hint={f.drinks ? `${num(f.drinks.bottles, f.drinks.bottles % 1 ? 1 : 0)} ${f.drinks.bottles === 1 ? "bottle" : "bottles"}` : undefined} />
       <StatTile label="Sodium" value={num(f.per_hour.sodium_mg)} unit="mg/h" />
       <StatTile label="Caffeine" value={num(f.during.caffeine_mg)} unit="mg" />
       <StatTile
@@ -73,7 +73,7 @@ function FuelingSummary({ fueling: f, unit }: { fueling: Fueling; unit: WeightUn
         unit="kcal"
         hint={f.burned_kcal ? `of ${num(f.burned_kcal)} kcal burned` : undefined}
       />
-      {ratio ? <StatTile label="Glucose : fructose" value={ratio} hint="In the bottles" /> : null}
+      {ratio ? <StatTile label="Glucose : fructose" value={ratio} hint="Maltodextrin and sucrose in the bottles" /> : null}
       {s ? (
         <>
           <StatTile
@@ -86,7 +86,7 @@ function FuelingSummary({ fueling: f, unit }: { fueling: Fueling; unit: WeightUn
             label="Sweat rate"
             value={num(s.sweat_l_per_h, 2)}
             unit="L/h"
-            hint={`${num(fromKg(-s.change_kg, unit), 1)} ${unit} lost + ${num(f.during.fluid_ml ?? 0)} ml drunk`}
+            hint={`${num(fromKg(Math.abs(s.change_kg), unit), 1)} ${unit} ${s.change_kg > 0 ? "gained" : "lost"} + ${num(f.during.fluid_ml ?? 0)} ml drunk`}
           />
         </>
       ) : null}
