@@ -6,7 +6,7 @@ import { useColors } from "@/hooks";
 import { durationLabel, isNum, num, pct } from "@/lib/format";
 import type { Token } from "@/lib/theme";
 
-import { durabilityChart, durabilityRows, stepLabel, worstFade, wPerKg, type DurabilityRow } from "../lib/insights";
+import { durabilityChart, durabilityRows, stepLabel, stepText, worstFade, wPerKg, type DurabilityRow } from "../lib/insights";
 
 // Fixed identity per duration, in the categorical order.
 const LINE_TOKENS: Token[] = ["series-1", "series-2", "series-3"];
@@ -18,11 +18,15 @@ export function DurabilityCard({ durability: d, weight }: { durability: Durabili
   const rows = durabilityRows(d);
   const data = durabilityChart(d);
   const fade = worstFade(d);
+  // A fixed floor of 90 % (lower when the fade is bigger), so a 2 % fade does not fill the chart.
+  const low = Math.min(90, Math.floor(Math.min(...rows.flatMap((r) => r.cells.map((x) => x.ofFresh ?? 100))) / 5) * 5);
+  const ticks = Array.from({ length: (100 - low) / 5 + 1 }, (_, i) => low + i * 5);
   const legend = rows.map((r, i) => ({ label: `Best ${durationLabel(r.duration_s)}`, color: c[LINE_TOKENS[i % LINE_TOKENS.length]!] }));
   const subtitle = (
     <>
       Your best efforts after the ride had already done this much work ({num(d.total, d.unit === "kJ" ? 0 : 1)} {d.unit} in all), as a share of the same effort from the
-      start. {fade ? `Biggest fade: best ${durationLabel(fade.duration_s)} at ${pct(fade.ofFresh, 0)} after ${num(fade.step)} ${d.unit}.` : ""}
+      start. {fade ? `Biggest fade: best ${durationLabel(fade.duration_s)} at ${pct(fade.ofFresh, 0)} after ${stepText(fade.step)} ${d.unit}.` : ""}
+      {" "}It shows what you rode: a fade means fatigue only if you went hard again late in the ride.
       {weight ? null : " Add your pre-ride weight under Fueling to measure it per kg, as pros do."}
     </>
   );
@@ -34,8 +38,8 @@ export function DurabilityCard({ durability: d, weight }: { durability: Durabili
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={data} margin={CHART_MARGIN}>
             <CartesianGrid {...gridProps(c)} />
-            <XAxis dataKey="step" type="category" tickFormatter={(s: number) => (s === 0 ? "Start" : `${num(s)}`)} {...axisProps(c)} />
-            <YAxis {...axisProps(c)} width={Y_AXIS_WIDTH} domain={["auto", 100]} tickFormatter={(v: number) => `${v}%`} allowDecimals={false} />
+            <XAxis dataKey="step" type="category" tickFormatter={(s: number) => (s === 0 ? "Start" : stepText(s))} {...axisProps(c)} />
+            <YAxis {...axisProps(c)} width={Y_AXIS_WIDTH} domain={[low, 100]} ticks={ticks} tickFormatter={(v: number) => `${v}%`} allowDecimals={false} />
             <ReferenceLine y={100} stroke={c.axis} />
             <Tooltip
               cursor={lineCursor(c)}

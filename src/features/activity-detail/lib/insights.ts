@@ -20,9 +20,14 @@ export function weightNote(weight: RideWeight): string {
     : `${num(weight.kg, 1)} kg, latest weigh-in (${formatDay(weight.date)})`;
 }
 
+/** A durability step: "10", "2.5". */
+export function stepText(step: number): string {
+  return num(step, Number.isInteger(step) ? 0 : 1);
+}
+
 /** Column heading of a durability step: "From the start", "After 10 kJ/kg". */
 export function stepLabel(step: number, unit: Durability["unit"]): string {
-  return step === 0 ? "From the start" : `After ${num(step)} ${unit}`;
+  return step === 0 ? "From the start" : `After ${stepText(step)} ${unit}`;
 }
 
 export type DurabilityCell = { watts: number | null; ofFresh: number | null };
