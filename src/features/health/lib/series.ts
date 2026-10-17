@@ -2,8 +2,8 @@ import type { DailyMetric } from "@/api";
 import { addDays, RANGE_PRESETS, type DatedValue, type ISODate } from "@/lib/dates";
 import { isNum, signed } from "@/lib/format";
 
-/** Health data covers up to a year (a day's metrics are small, but nobody reads years of resting HR). */
-export const HEALTH_PRESETS = RANGE_PRESETS.filter((p) => ["42d", "90d", "6m", "1y"].includes(p.id));
+/** Health ranges: up to all time (weight, resting HR and HRV trends span years). */
+export const HEALTH_PRESETS = RANGE_PRESETS.filter((p) => ["42d", "90d", "6m", "1y", "2y", "all"].includes(p.id));
 
 /** When several sources report the same day, the first of these wins. */
 const SOURCE_PREFERENCE = ["garmin", "google_health"];

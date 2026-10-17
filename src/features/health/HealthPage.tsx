@@ -5,13 +5,14 @@ import { DayHeartRateCard } from "./components/DayHeartRateCard";
 import { HealthTiles } from "./components/HealthTiles";
 import { MetricCard } from "./components/MetricCard";
 import { SleepCard } from "./components/SleepCard";
+import { WeightCard } from "./components/WeightCard";
 import { useHealthData } from "./hooks/useHealthData";
 import { HEALTH_PRESETS } from "./lib/series";
 
-/** Recovery markers (resting HR, HRV, sleep, weight) next to training form. */
+/** Recovery markers (resting HR, HRV, sleep) next to training form, and body weight over all time. */
 export function HealthPage() {
-  const { presetId, setPresetId, range } = useRangePreset("90d", HEALTH_PRESETS);
-  const health = useHealthData(range);
+  const { presetId, setPresetId, preset, range } = useRangePreset("90d", HEALTH_PRESETS);
+  const health = useHealthData(range, !!preset.all);
 
   if (health.failed) return <ErrorCard error={health.failed.error} />;
 
@@ -30,7 +31,10 @@ export function HealthPage() {
           Connect Garmin for resting heart rate, HRV, sleep and all-day heart rate: in the backend repo run{" "}
           <code>fitness-hub auth garmin</code>, then <code>fitness-hub sync --source garmin</code>.
         </EmptyCard>
-      ) : (
+      ) : null}
+      {/* Even when the range has nothing else: the weight card has its own range. */}
+      {health.empty ? <WeightCard /> : null}
+      {health.loading || health.empty ? null : (
         <>
           <HealthTiles
             end={range.end}
@@ -48,6 +52,8 @@ export function HealthPage() {
           >
             <DailyLineChart data={health.form} token="series-1" unit="" zero syncId="health" />
           </ChartCard>
+          {/* On its own range (all time by default): weigh-ins come in spells the page's range often misses. */}
+          <WeightCard />
           <div className="grid two">
             <MetricCard title="Resting heart rate" unit="bpm" data={health.resting} token="series-8" />
             <MetricCard title="Heart-rate variability" unit="ms" data={health.hrv} token="series-7" subtitle="Nightly RMSSD" />
@@ -55,10 +61,7 @@ export function HealthPage() {
 
           <SleepCard nights={health.nights} refetching={health.sleep.isFetching} />
 
-          <div className="grid two">
-            <MetricCard title="Weight" unit="kg" data={health.weight} token="series-1" digits={1} />
-            <DayHeartRateCard />
-          </div>
+          <DayHeartRateCard />
         </>
       )}
     </>
