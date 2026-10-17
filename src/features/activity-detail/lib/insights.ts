@@ -20,15 +20,15 @@ export function weightNote(weight: RideWeight): string {
     : `${num(weight.kg, 1)} kg, latest weigh-in (${formatDay(weight.date)})`;
 }
 
-/** A durability step: "10", "2.5". */
+/** A durability step in kJ: "1,200". */
 export function stepText(step: number): string {
-  return num(step, Number.isInteger(step) ? 0 : 1);
+  return num(step);
 }
 
 /** Heading of a durability step: "From the start", "After 700 kJ", with a weight "After 700 kJ (10.0 kJ/kg)". */
 export function stepLabel(step: number, unit: Durability["unit"], kg?: number | null): string {
   if (step === 0) return "From the start";
-  const kjPerKg = unit === "kJ" ? perKg(step, kg) : null;
+  const kjPerKg = perKg(step, kg);
   return `After ${stepText(step)} ${unit}${kjPerKg === null ? "" : ` (${num(kjPerKg, 1)} kJ/kg)`}`;
 }
 

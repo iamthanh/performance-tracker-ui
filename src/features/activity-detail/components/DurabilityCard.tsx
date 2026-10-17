@@ -28,7 +28,7 @@ export function DurabilityCard({ durability: d, weight }: { durability: Durabili
   const legend = rows.map((r, i) => ({ label: `Best ${durationLabel(r.duration_s)}`, color: c[LINE_TOKENS[i % LINE_TOKENS.length]!] }));
   const subtitle = (
     <>
-      Your best efforts after the ride had already done this much work ({num(d.total, d.unit === "kJ" ? 0 : 1)} {d.unit} in all), as a share of the same effort from the
+      Your best efforts after the ride had already done this much work ({num(d.total)} {d.unit} in all), as a share of the same effort from the
       start. {fade ? `Biggest fade: best ${durationLabel(fade.duration_s)} at ${pct(fade.ofFresh, 0)} ${stepLabel(fade.step, d.unit, kg).replace("After", "after")}.` : ""}
       {" "}It shows what you rode: a fade means fatigue only if you went hard again late in the ride.
       {weight ? null : " Add your pre-ride weight under Fueling to see the work per kg too, as pros measure it."}

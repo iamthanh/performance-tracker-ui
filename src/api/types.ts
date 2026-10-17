@@ -143,9 +143,9 @@ export interface RideWeight {
 }
 
 export interface Durability {
-  /** Accumulated work in kJ per kg of body weight, or plain kJ without a weight. */
-  unit: "kJ/kg" | "kJ";
-  /** Work done before the effort may start: 0 (from the start), 10, 20 ... */
+  /** Accumulated work is in kJ (the UI adds kJ/kg when a body weight is known). */
+  unit: "kJ";
+  /** Work done before the effort may start: 0 (from the start), 100, 200 ... (coarser on very long rides) */
   steps: number[];
   total: number;
   /** Best watts per step, null when too little of the ride was left after it. */
