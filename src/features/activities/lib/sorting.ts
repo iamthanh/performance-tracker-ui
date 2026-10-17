@@ -1,6 +1,14 @@
 import type { ActivityRow } from "@/api";
 
-export type SortKey = "local_date" | "moving_s" | "distance_m" | "tss" | "intensity_factor" | "normalized_power_w" | "avg_hr";
+export type SortKey =
+  | "local_date"
+  | "moving_s"
+  | "distance_m"
+  | "tss"
+  | "intensity_factor"
+  | "normalized_power_w"
+  | "avg_hr"
+  | "kcal";
 export type Sort = { key: SortKey; desc: boolean };
 
 export const DEFAULT_SORT: Sort = { key: "local_date", desc: true };

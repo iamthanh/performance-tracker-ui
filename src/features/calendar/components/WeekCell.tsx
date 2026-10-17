@@ -15,6 +15,8 @@ export function WeekCell({ totals, future }: { totals: Totals | undefined; futur
           <dd>{num(totals.tss)}</dd>
           <dt>Work</dt>
           <dd>{num(totals.work_kj)} kJ</dd>
+          <dt title="Calories burned in workouts">kcal</dt>
+          <dd>{totals.kcal ? num(totals.kcal) : "—"}</dd>
         </dl>
       ) : future ? null : (
         <span className="muted small">Rest</span>

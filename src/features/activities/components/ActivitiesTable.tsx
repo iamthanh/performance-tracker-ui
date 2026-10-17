@@ -27,6 +27,7 @@ const METRIC_COLUMNS: { key: Exclude<SortKey, "local_date">; label: string; cell
   { key: "intensity_factor", label: "IF", cell: (a) => num(a.intensity_factor, 2) },
   { key: "normalized_power_w", label: "NP", cell: (a) => (isNum(a.normalized_power_w) ? `${num(a.normalized_power_w)} W` : "—") },
   { key: "avg_hr", label: "Avg HR", cell: (a) => num(a.avg_hr) },
+  { key: "kcal", label: "Calories", cell: (a) => (isNum(a.kcal) ? `${num(a.kcal)} kcal` : "—") },
 ];
 
 /** One row per workout; headers sort, rows open the workout (click, Enter or Space). */

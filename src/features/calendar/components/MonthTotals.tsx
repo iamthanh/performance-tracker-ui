@@ -20,6 +20,7 @@ export function MonthTotals({
       <StatTile label="Elevation" value={num(totals.elevation_gain_m)} unit="m" />
       <StatTile label="TSS" value={num(totals.tss)} hint={totals.unscored ? `${totals.unscored} without TSS` : undefined} />
       <StatTile label="Work" value={num(totals.work_kj)} unit="kJ" />
+      <StatTile label="Workout calories" value={totals.kcal ? num(totals.kcal) : "—"} unit="kcal" />
       {energy.eaten !== null ? <StatTile label="Eaten / day" value={num(energy.eaten)} unit="kcal" hint="Logged days" /> : null}
       {energy.burned !== null ? <StatTile label="Burned / day" value={num(energy.burned)} unit="kcal" /> : null}
     </div>

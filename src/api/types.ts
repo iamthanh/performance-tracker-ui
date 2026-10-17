@@ -54,6 +54,8 @@ export interface ActivityRow extends Activity {
   variability_index: number | null;
   efficiency_factor: number | null;
   decoupling_pct: number | null;
+  /** Energy burned: recorded calories (from any service's copy), else a ride's kJ of work. */
+  kcal: number | null;
 }
 
 export interface Zone {
@@ -136,6 +138,8 @@ export interface Totals {
   elevation_gain_m: number;
   tss: number;
   work_kj: number;
+  /** kcal burned in the period's workouts. */
+  kcal: number;
   unscored: number;
 }
 

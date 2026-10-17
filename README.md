@@ -8,8 +8,8 @@ training metrics. Nothing leaves your machine.
 | Page | What it shows |
 |---|---|
 | **Fitness** | Fitness (CTL), fatigue (ATL) and form (TSB) with daily TSS, like the Performance Management Chart; weekly TSS; ramp rate; calories eaten vs burned |
-| **Calendar** | Month view of workouts (duration, TSS, IF, distance) with weekly totals (hours, distance, TSS, kJ); kcal in and out per day |
-| **Activities** | Every workout, sortable and searchable, with TSS, IF, NP, average HR and decoupling |
+| **Calendar** | Month view of workouts (duration, TSS, IF, distance, kcal burned) with weekly totals (hours, distance, TSS, kJ, kcal); kcal in and out per day |
+| **Activities** | Every workout, sortable and searchable, with TSS, IF, NP, average HR, calories burned and decoupling |
 | **Workout** | Power, heart rate, cadence, speed and elevation over time with a synced crosshair and readout; NP, IF, TSS, VI, EF, Pw:HR decoupling, work; time in power and HR zones; peak power vs your 90-day best; route; fueling (carbs, fluid and sodium per hour, caffeine, vs energy and estimated carbs burned); laps |
 | **Power curve** | Mean-maximal power from 1 s to 5 h, comparing two date ranges, with the ride that set each best |
 | **Health** | Resting HR, HRV, sleep stages and weight from Garmin next to form; all-day heart rate for any day |
