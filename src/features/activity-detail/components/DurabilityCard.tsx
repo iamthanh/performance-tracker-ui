@@ -112,7 +112,7 @@ export function DurabilityCard({ durability: d, weight }: { durability: Durabili
               cursor={lineCursor(c)}
               content={tooltipContent<Record<string, number | null>>((p) => (
                 <TooltipBox
-                  title={`${stepLabel(p.step!, d.unit, kg)}${isNum(stepTime(p.step!)) ? ` · ${duration(stepTime(p.step!))} into the ride` : ""}`}
+                  title={`${stepLabel(p.step!, d.unit, kg)}${p.step && isNum(stepTime(p.step)) ? ` · ${duration(stepTime(p.step))} into the ride` : ""}`}
                   rows={shown.map((r) => ({
                     name: `Best ${durationLabel(r.duration_s)}`,
                     value: cellText(r.cells[d.steps.indexOf(p.step!)]!),
@@ -138,7 +138,7 @@ export function DurabilityCard({ durability: d, weight }: { durability: Durabili
       )}
       {d.steps.length >= 2 && timeMarks.length ? (
         <p className="small muted" style={{ margin: "4px 0 0" }}>
-          Lower axis: elapsed ride time (h:mm) at that much work. It stretches where you rode hard and bunches up through easy
+          Lower axis: elapsed ride time (30m, 1:30 …) when you had done that much work. It stretches where you rode hard and bunches up through easy
           riding and stops.
         </p>
       ) : null}
