@@ -24,6 +24,7 @@ describe("ride insights", () => {
   it("labels steps", () => {
     expect(stepLabel(0, "kJ")).toBe("From the start");
     expect(stepLabel(2000, "kJ")).toBe("After 2,000 kJ");
+    expect(stepLabel(2.5, "kJ/kg")).toBe("After 2.5 kJ/kg");
   });
 
   it("shows each step as a share of the from-the-start best", () => {
