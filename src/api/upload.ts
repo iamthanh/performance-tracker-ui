@@ -33,6 +33,9 @@ export function importActivityFile(
         } catch {
           reject(new ApiError(xhr.status, "The API sent an unreadable answer"));
         }
+      } else if (xhr.status === 404) {
+        // The route itself is missing: an API older than this UI.
+        reject(new ApiError(404, "This fitness-hub API cannot import files yet: update the backend and restart `fitness-hub serve-api`"));
       } else reject(apiError(xhr.status, xhr.statusText, xhr.responseText));
     };
     xhr.onerror = () => reject(apiError(0, "", ""));
