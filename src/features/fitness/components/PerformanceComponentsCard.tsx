@@ -21,7 +21,7 @@ export function PerformanceComponentsCard({ perf, days, tick }: { perf: Performa
     <Card label="Performance components">
       <CardHeader
         title="What the score is made of"
-        subtitle="Each component as an index (100 = your baseline), its weight in the score, and when you last went near-maximal for it."
+        subtitle="Each component as an index (100 = your baseline) of W/kg, each ride's power over its own weight (durability: the share of power kept), its weight in the score, and when you last went near-maximal for it."
       />
       <div className="mini-grid">
         {perf.components.map((k) => {
@@ -39,6 +39,7 @@ export function PerformanceComponentsCard({ perf, days, tick }: { perf: Performa
                 since === null ? "Not tested in the window" : since === 0 ? "Tested today" : `Last tested ${since} day${since === 1 ? "" : "s"} ago`
               }
               stale={stale}
+              flag={latest.components[k.key].estimated_weight ? "Rests on an estimated weight (a long gap without weigh-ins)" : undefined}
               data={series}
               baseline
               token="series-1"
@@ -71,6 +72,7 @@ function MiniChart({
   deltaDigits = 1,
   status,
   stale = false,
+  flag,
   data,
   baseline = false,
   token,
@@ -84,6 +86,8 @@ function MiniChart({
   deltaDigits?: number;
   status?: string;
   stale?: boolean;
+  /** A caveat on the value (e.g. it rests on an estimated weight). */
+  flag?: string;
   data: Point[];
   baseline?: boolean;
   token: Token;
@@ -101,6 +105,7 @@ function MiniChart({
       </div>
       <div className="small muted">{note}</div>
       {status ? <div className={stale ? "small mini-stale" : "small muted"}>{stale ? `⚠ ${status}` : status}</div> : null}
+      {flag ? <div className="small mini-stale">⚠ {flag}</div> : null}
       <ResponsiveContainer width="100%" height={110}>
         <ComposedChart data={data} syncId="perf" syncMethod="value" margin={{ top: 6, right: 8, bottom: 0, left: -8 }}>
           <CartesianGrid {...gridProps(c)} />
