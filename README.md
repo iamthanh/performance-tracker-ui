@@ -9,7 +9,7 @@ training metrics. Nothing leaves your machine.
 |---|---|
 | **Fitness** | Fitness (CTL), fatigue (ATL) and form (TSB) with daily TSS, like the Performance Management Chart; weekly TSS; ramp rate; calories eaten vs burned |
 | **Calendar** | Month view of workouts (duration, TSS, IF, distance, kcal burned) with weekly totals (hours, distance, TSS, kJ, kcal); kcal in and out per day |
-| **Activities** | Every workout, sortable and searchable, with TSS, IF, NP, average HR, calories burned and decoupling |
+| **Activities** | Every workout, sortable and searchable, with TSS, IF, NP, average HR, calories burned and decoupling; **Import workout** uploads .fit/.gpx/.tcx files (drag and drop, several at once) and analyses them |
 | **Workout** | Power, heart rate, cadence, speed and elevation over time with a synced crosshair and readout; NP, IF, TSS, VI, EF, Pw:HR decoupling, work; time in power and HR zones; peak power vs your 90-day best; route; fueling (carbs, fluid and sodium per hour, caffeine, vs energy and estimated carbs burned); laps |
 | **Power curve** | Mean-maximal power from 1 s to 5 h, comparing two date ranges, with the ride that set each best |
 | **Health** | Resting HR, HRV, sleep stages and weight from Garmin next to form; all-day heart rate for any day |
@@ -93,8 +93,8 @@ src/
     charts/           ChartCard, TooltipBox + tooltipContent, DailyLineChart, Legend, shared axis/grid props
     controls/         Segmented, RangePresetPicker, Field
     data/             StatTile, DataTable, Badge
-    feedback/         Loading / ErrorState / Empty, their *Card versions, ErrorBoundary
-    layout/           PageHeader, Card + CardHeader
+    feedback/         Loading / ErrorState / Empty, their *Card versions, ErrorBoundary, Spinner, ProgressBar
+    layout/           PageHeader, Card + CardHeader, Modal
     nutrition/        EntryForm (log food or drink, or a workout's fueling), NutrientFields
   hooks/              generic hooks: useColors (chart colours), useRangePreset, useThemeChoice
   api/                http.ts (fetch + errors), endpoints.ts (one function per endpoint), queries.ts (TanStack
