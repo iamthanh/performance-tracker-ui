@@ -523,6 +523,9 @@ export interface Performance {
   decay_per_week: number;
   window_days: number;
   components: { key: PerformanceComponent; label: string; description: string; unit: "W" | "share"; baseline: number | null }[];
+  /** The first ride with power, and the day the index starts (once its first 90-day window is full). */
+  first_ride: string | null;
+  starts: string | null;
   days: PerformanceDay[];
   events: PerformanceEvent[];
 }

@@ -1,6 +1,6 @@
 import { usePerformance } from "@/api";
 import { EmptyCard, ErrorCard, LoadingCard } from "@/components";
-import { dateTickFormatter, daysBetween } from "@/lib/dates";
+import { dateTickFormatter, daysBetween, formatFullDay } from "@/lib/dates";
 
 import { scoredDays } from "../lib/performance";
 import { PerformanceCard } from "./PerformanceCard";
@@ -14,9 +14,18 @@ export function PerformanceSection({ range }: { range: { start: string; end: str
   if (perf.isPending) return <LoadingCard label="Loading the performance index…" />;
   const days = scoredDays(perf.data.days);
   if (!days.length) {
+    const { first_ride, starts } = perf.data;
     return (
       <EmptyCard title="No performance index yet">
-        It needs rides with power: import them, then run <code>fitness-hub analyze</code>.
+        {!first_ride ? (
+          <>
+            It needs rides with power: import them, then run <code>fitness-hub analyze</code>.
+          </>
+        ) : starts && starts > range.end ? (
+          <>It starts on {formatFullDay(starts)}, once it has 90 days of your rides to measure from.</>
+        ) : (
+          <>No scored days in this range: the index starts on {starts ? formatFullDay(starts) : "—"}.</>
+        )}
       </EmptyCard>
     );
   }
