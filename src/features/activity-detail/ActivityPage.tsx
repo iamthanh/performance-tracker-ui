@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { useActivity, useInsights, useStreams } from "@/api";
@@ -6,6 +7,7 @@ import { num } from "@/lib/format";
 
 import { ActivityHeader } from "./components/ActivityHeader";
 import { ActivityTiles } from "./components/ActivityTiles";
+import { BestEffortsCard } from "./components/BestEffortsCard";
 import { DurabilityCard } from "./components/DurabilityCard";
 import { EffortsCard } from "./components/EffortsCard";
 import { FuelingCard } from "./components/FuelingCard";
@@ -15,6 +17,7 @@ import { RouteCard } from "./components/RouteCard";
 import { StreamsSection } from "./components/StreamsSection";
 import { WPrimeCard } from "./components/WPrimeCard";
 import { ZoneCard } from "./components/ZoneCard";
+import type { Highlight } from "./lib/highlight";
 import { isOnFoot } from "./lib/sport";
 
 /** One workout's analysis: headline numbers, per-second charts, zones, peak power, durability, W′ balance,
@@ -25,6 +28,11 @@ export function ActivityPage() {
   const hasStreams = !!detail.data?.streams;
   const streams = useStreams(source, id, hasStreams);
   const insights = useInsights(source, id);
+  // Kept with the activity it belongs to, so it never shows on the next one (the route reuses this page).
+  const [mark, setMark] = useState<{ activity: string; highlight: Highlight } | null>(null);
+  const activityKey = `${source}/${id}`;
+  const highlight = mark?.activity === activityKey ? mark.highlight : null;
+  const setHighlight = (h: Highlight | null) => setMark(h ? { activity: activityKey, highlight: h } : null);
 
   if (detail.isError) return <ErrorCard error={detail.error} />;
   if (detail.isPending) return <LoadingCard />;
@@ -37,7 +45,25 @@ export function ActivityPage() {
     <>
       <ActivityHeader detail={d} />
       <ActivityTiles detail={d} weight={ins?.weight ?? null} />
-      <StreamsSection hasStreams={hasStreams} streams={streams} onFoot={isOnFoot(d.activity.sport)} />
+      <StreamsSection
+        hasStreams={hasStreams}
+        streams={streams}
+        onFoot={isOnFoot(d.activity.sport)}
+        highlight={highlight}
+        onClearHighlight={() => setHighlight(null)}
+      />
+      {/* Right under the charts, where picking a row marks the stretch. */}
+      {ins?.best_efforts?.length ? (
+        <BestEffortsCard
+          efforts={ins.best_efforts}
+          kg={kg}
+          selected={highlight}
+          onSelect={(h) => {
+            setHighlight(h);
+            if (h) showMarkedStretch();
+          }}
+        />
+      ) : null}
       <div className="grid two">
         {m?.power_zones ? <ZoneCard title="Time in power zones" zones={m.power_zones} unit="W" threshold={`FTP ${num(m.ftp_w)} W`} /> : null}
         {m?.hr_zones ? (
@@ -54,4 +80,11 @@ export function ActivityPage() {
       {d.laps.length > 1 ? <LapsTable laps={d.laps} running={d.activity.sport === "running"} /> : null}
     </>
   );
+}
+
+/** Scroll the charts (top of the page) into view and move focus to the mark's clear button there. */
+function showMarkedStretch() {
+  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  document.querySelector('[aria-label="Workout charts"]')?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('[aria-label="Clear the marked stretch"]')?.focus({ preventScroll: true }));
 }

@@ -1,22 +1,25 @@
-import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, CartesianGrid, ComposedChart, Line, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { axisProps, gridProps, Y_AXIS_WIDTH } from "@/components";
 import { useColors } from "@/hooks";
 import { elapsedLabel } from "@/lib/format";
 
 import type { ChannelSpec, StreamRow } from "../lib/channels";
+import { visibleSpan, type Highlight } from "../lib/highlight";
 
 /** One channel over the workout. Charts share the hover position (syncId); only the last shows the time axis. */
 export function StreamChart({
   channel: ch,
   rows,
   showTimeAxis,
+  highlight,
   onMouseMove,
   onMouseLeave,
 }: {
   channel: ChannelSpec;
   rows: StreamRow[];
   showTimeAxis: boolean;
+  highlight: Highlight | null;
   onMouseMove: (state: { activeTooltipIndex?: number | string | null }) => void;
   onMouseLeave: () => void;
 }) {
@@ -36,6 +39,7 @@ export function StreamChart({
           onMouseLeave={onMouseLeave}
         >
           <CartesianGrid {...gridProps(c)} />
+          {highlight ? <ReferenceArea {...visibleSpan(highlight, rows)} fill={c["series-4"]} fillOpacity={0.14} stroke="none" ifOverflow="hidden" /> : null}
           <XAxis
             dataKey="t"
             type="number"
