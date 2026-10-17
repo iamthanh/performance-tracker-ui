@@ -89,6 +89,8 @@ export const RANGE_PRESETS: RangePreset[] = [
   { id: "6m", label: "6 months", days: 182 },
   { id: "1y", label: "1 year", days: 365 },
   { id: "2y", label: "2 years", days: 730 },
+  { id: "3y", label: "3 years", days: 1096 },
+  { id: "5y", label: "5 years", days: 1826 },
   { id: "all", label: "All time", all: true },
 ];
 

@@ -24,10 +24,12 @@ import { fromKg, saveWeightUnit, storedWeightUnit, type WeightUnit } from "@/lib
 
 import { chartPoints, dayNumber, fromDayNumber, KIND_LABEL, tableRows, weightStats, type WeightPoint, type WeightRow } from "../lib/weight";
 
-type Span = "1y" | "2y" | "all";
-const SPANS: { value: Span; label: string }[] = [
-  { value: "1y", label: "1 year" },
-  { value: "2y", label: "2 years" },
+type Span = "1y" | "2y" | "3y" | "5y" | "all";
+const SPANS: { value: Span; label: string; days?: number }[] = [
+  { value: "1y", label: "1 year", days: 365 },
+  { value: "2y", label: "2 years", days: 730 },
+  { value: "3y", label: "3 years", days: 1096 },
+  { value: "5y", label: "5 years", days: 1826 },
   { value: "all", label: "All time" },
 ];
 
@@ -41,7 +43,8 @@ export function WeightCard() {
   const [span, setSpan] = useState<Span>("all");
   const [unit, setUnit] = useState<WeightUnit>(storedWeightUnit);
   const all = useMemo(() => weight.data?.days ?? [], [weight.data]);
-  const start = span === "all" ? (all[0]?.date ?? end) : addDays(end, span === "1y" ? -364 : -729);
+  const days = SPANS.find((x) => x.value === span)?.days;
+  const start = days ? addDays(end, -(days - 1)) : (all[0]?.date ?? end);
   const shown = all.filter((d) => d.date >= start && d.date <= end);
   const stats = weightStats(shown, unit);
   const lastEver = [...all].reverse().find((d) => d.weigh_in !== null);

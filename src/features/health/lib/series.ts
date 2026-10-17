@@ -3,7 +3,7 @@ import { addDays, RANGE_PRESETS, type DatedValue, type ISODate } from "@/lib/dat
 import { isNum, signed } from "@/lib/format";
 
 /** Health ranges: up to all time (weight, resting HR and HRV trends span years). */
-export const HEALTH_PRESETS = RANGE_PRESETS.filter((p) => ["42d", "90d", "6m", "1y", "2y", "all"].includes(p.id));
+export const HEALTH_PRESETS = RANGE_PRESETS.filter((p) => ["42d", "90d", "6m", "1y", "2y", "3y", "5y", "all"].includes(p.id));
 
 /** When several sources report the same day, the first of these wins. */
 const SOURCE_PREFERENCE = ["garmin", "google_health"];
