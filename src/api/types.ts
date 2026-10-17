@@ -221,3 +221,102 @@ export interface Thresholds {
 export interface AnalysisResult {
   analysis: { analysed: number; rescored: number; ftp_changes: number; threshold_hr_changes: number };
 }
+
+// -- nutrition -------------------------------------------------------------------------------
+
+export const NUTRIENT_KEYS = [
+  "kcal",
+  "carbs_g",
+  "sugars_g",
+  "protein_g",
+  "fat_g",
+  "fiber_g",
+  "sodium_mg",
+  "potassium_mg",
+  "caffeine_mg",
+  "fluid_ml",
+] as const;
+export type NutrientKey = (typeof NUTRIENT_KEYS)[number];
+/** Amounts; null = unknown. Per serving for a food, totals for an entry. */
+export type Nutrients = Record<NutrientKey, number | null>;
+
+export const MEALS = ["breakfast", "lunch", "dinner", "snack", "pre_workout", "during_workout", "post_workout"] as const;
+export type Meal = (typeof MEALS)[number];
+
+export interface Food extends Nutrients {
+  id: number;
+  name: string;
+  brand: string | null;
+  serving: string | null;
+  note: string | null;
+  archived: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type FoodInput = Partial<Nutrients> & {
+  name: string;
+  brand?: string | null;
+  serving?: string | null;
+  note?: string | null;
+  archived?: boolean;
+};
+
+export interface NutritionEntry extends Nutrients {
+  id: number;
+  source: string;
+  source_id: string | null;
+  local_date: string;
+  consumed_at: string | null;
+  meal: Meal;
+  activity_source: string | null;
+  activity_source_id: string | null;
+  /** Seconds into the linked workout. */
+  offset_s: number | null;
+  food_id: number | null;
+  name: string;
+  servings: number;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Nutrients not given are filled from the food (per serving x servings). */
+export type EntryInput = Partial<Nutrients> & {
+  local_date: string;
+  meal: Meal;
+  name?: string;
+  food_id?: number;
+  servings?: number;
+  consumed_at?: string;
+  activity_source?: string;
+  activity_source_id?: string;
+  offset_s?: number;
+  note?: string;
+};
+
+export interface NutritionDay {
+  date: string;
+  entries: number;
+  intake: Nutrients;
+  /** Workouts' recorded calories, else kJ of work for rides. */
+  workout_kcal: number | null;
+  /** The watch's total (BMR + active) and active calories, once synced. */
+  total_kcal: number | null;
+  active_kcal: number | null;
+  /** Intake minus total, when both are known. */
+  balance_kcal: number | null;
+}
+
+export interface Fueling {
+  activity: { source: string; source_id: string; name: string | null; local_date: string; moving_s: number | null };
+  entries: NutritionEntry[];
+  /** Totals taken during the workout. */
+  during: Nutrients;
+  per_hour: Record<"kcal" | "carbs_g" | "fluid_ml" | "sodium_mg" | "caffeine_mg", number | null>;
+  burned_kcal: number | null;
+  intensity_factor: number | null;
+  carb_share_estimate: number | null;
+  carbs_burned_g_estimate: number | null;
+  carbs_burned_g_per_h_estimate: number | null;
+}

@@ -22,7 +22,7 @@ export function PowerCurveTiles({ rows, labelB, ftp }: { rows: CurveRow[]; label
           />
         );
       })}
-      <StatTile label="FTP in effect" value={num(ftp)} unit="W" hint="95% of best 20 min, or your setting" />
+      <StatTile label="FTP in effect" value={num(ftp)} unit="W" hint="From your power curve, or your setting" />
     </div>
   );
 }

@@ -52,5 +52,6 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const unreachable = !fromApi && [500, 502, 504].includes(response.status);
     throw new ApiError(response.status, unreachable ? UNREACHABLE : detail, unreachable);
   }
+  if (response.status === 204) return undefined as T; // a delete: no body
   return (await response.json()) as T;
 }

@@ -6,6 +6,7 @@ import { num } from "@/lib/format";
 
 import { ActivityHeader } from "./components/ActivityHeader";
 import { ActivityTiles } from "./components/ActivityTiles";
+import { FuelingCard } from "./components/FuelingCard";
 import { LapsTable } from "./components/LapsTable";
 import { PeakPowerCard } from "./components/PeakPowerCard";
 import { RouteCard } from "./components/RouteCard";
@@ -38,6 +39,7 @@ export function ActivityPage() {
         {m && m.power_curve.length ? <PeakPowerCard detail={d} /> : null}
         {streams.data?.lat && streams.data.lng ? <RouteCard lat={streams.data.lat} lng={streams.data.lng} /> : null}
       </div>
+      <FuelingCard source={d.activity.source} sourceId={d.activity.source_id} date={d.activity.local_date} />
       {d.laps.length > 1 ? <LapsTable laps={d.laps} running={d.activity.sport === "running"} /> : null}
     </>
   );

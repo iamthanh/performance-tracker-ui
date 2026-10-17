@@ -25,7 +25,8 @@ export function trimLeadingEmpty(days: LoadDay[]): LoadDay[] {
 
 /**
  * The threshold in effect on `day`, by the backend's rule (analysis.Timeline): the latest manual
- * value holds unless an automatic value dated after it rose above it (a new best effort); without
+ * value holds unless an automatic value dated after it rose above it (a new best effort, not a value
+ * easing down from higher up); without
  * a manual value the latest automatic one applies; before the first value, the first one applies.
  */
 export function thresholdOn(values: ThresholdValue[], day: string): number | null {
@@ -47,7 +48,12 @@ export function thresholdEntryOn(values: ThresholdValue[], day: string): Thresho
     return first[0] ?? null;
   }
   if (!m) return a!;
-  const surpassed = auto.some((v) => v.effective_date > m.effective_date && v.effective_date <= day && v.value > m.value);
+  // Only an automatic value that *rose* above the manual one (a new best) overrides it; one easing down
+  // from higher up does not.
+  const surpassed = auto.some(
+    (v, i) =>
+      v.effective_date > m.effective_date && v.effective_date <= day && v.value > m.value && (i === 0 || v.value > auto[i - 1]!.value),
+  );
   return surpassed && a ? a : m;
 }
 

@@ -1,6 +1,7 @@
 import { EmptyCard, ErrorCard, LoadingCard, PageHeader, RangePresetPicker } from "@/components";
 import { useRangePreset } from "@/hooks";
 
+import { EnergyCard } from "./components/EnergyCard";
 import { FitnessFatigueCard } from "./components/FitnessFatigueCard";
 import { FitnessTiles } from "./components/FitnessTiles";
 import { FormCard } from "./components/FormCard";
@@ -41,6 +42,7 @@ export function FitnessPage() {
             tick={tick}
             refetching={weeks.isFetching}
           />
+          <EnergyCard start={days[0]!.date} end={range.end} tick={tick} />
         </>
       )}
     </>

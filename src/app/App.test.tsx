@@ -156,3 +156,26 @@ it("removes a manual threshold only after confirmation", async () => {
   expect(await screen.findByText("Removed. 7 workouts re-scored.")).toBeInTheDocument();
   expect(calls.some((c) => c.init?.method === "DELETE" && c.url.pathname === "/api/thresholds/ftp_w/2026-09-02")).toBe(true);
 });
+
+it("logs a saved food on the Nutrition page", async () => {
+  const gel = { id: 7, name: "Maurten Gel 100", brand: null, serving: "1 gel", kcal: 100, carbs_g: 25, sugars_g: null,
+    protein_g: null, fat_g: null, fiber_g: null, sodium_mg: 20, potassium_mg: null, caffeine_mg: null, fluid_ml: null,
+    note: null, archived: false, created_at: "", updated_at: "" };
+  const day = { date: "2026-10-12", entries: 0, intake: { kcal: null }, workout_kcal: null, total_kcal: null,
+    active_kcal: null, balance_kcal: null, partial: false };
+  const calls = mockApi({
+    "/health": health,
+    "/nutrition/foods": () => [gel],
+    "/nutrition/entries": (_url, init) => (init?.method === "POST" ? { id: 1 } : []),
+    "/nutrition/daily": () => [day],
+  });
+  renderAt("/nutrition?day=2026-10-12");
+  expect(await screen.findByText("Nothing logged for this day")).toBeInTheDocument();
+  fireEvent.change(await screen.findByLabelText("Item"), { target: { value: "7" } });
+  fireEvent.change(screen.getByLabelText("Servings"), { target: { value: "2" } });
+  expect(screen.getByText(/Adds 200 kcal energy · 50 g carbs · 40 mg sodium/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Add" }));
+  await waitFor(() => expect(calls.some((c) => c.init?.method === "POST")).toBe(true));
+  const post = calls.find((c) => c.init?.method === "POST")!;
+  expect(JSON.parse(String(post.init!.body))).toEqual({ local_date: "2026-10-12", meal: "breakfast", servings: 2, food_id: 7 });
+});

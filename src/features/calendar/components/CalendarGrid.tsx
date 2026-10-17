@@ -1,4 +1,4 @@
-import type { ActivityRow, Totals } from "@/api";
+import type { ActivityRow, NutritionDay, Totals } from "@/api";
 import { addDays, type ISODate } from "@/lib/dates";
 
 import { WEEKDAYS } from "../lib/calendar";
@@ -12,6 +12,7 @@ export function CalendarGrid({
   weekStarts,
   byDay,
   weekTotals,
+  energyByDay,
   refetching,
 }: {
   month: ISODate;
@@ -19,6 +20,7 @@ export function CalendarGrid({
   weekStarts: ISODate[];
   byDay: Map<ISODate, ActivityRow[]>;
   weekTotals: Map<ISODate, Totals>;
+  energyByDay: Map<ISODate, NutritionDay>;
   refetching: boolean;
 }) {
   return (
@@ -42,6 +44,7 @@ export function CalendarGrid({
                 workouts={byDay.get(day) ?? []}
                 outside={day.slice(0, 7) !== month.slice(0, 7)}
                 isToday={day === today}
+                energy={energyByDay.get(day)}
               />
             );
           })}
