@@ -21,10 +21,13 @@ describe("ride insights", () => {
     expect(wPerKg(245, 0)).toBe("—");
   });
 
-  it("says where the weight comes from", () => {
-    expect(weightNote({ kg: 70.71, origin: "body", date: "2020-03-10", count: 7 })).toMatch(/^70\.7 kg, average of 7 weigh-ins to /);
-    expect(weightNote({ kg: 70, origin: "body", date: "2020-03-10", count: 1 })).toMatch(/^70\.0 kg, weigh-in of /);
-    expect(weightNote({ kg: 68.4, origin: "pre_workout", date: "2020-03-10" })).toBe("68.4 kg, weighed before the ride");
+  it("says where the weight comes from, measured or filled", () => {
+    const w = { kg: 70.71, origin: "trend", date: "2020-03-10", weigh_in: 71.2, gap_days: 0, last_weigh_in: "2020-03-10" } as const;
+    expect(weightNote({ ...w, kind: "weigh_in" })).toBe("70.7 kg trend weight; weigh-in that day 71.2 kg");
+    expect(weightNote({ ...w, kind: "interpolated", weigh_in: null, gap_days: 12 })).toMatch(/interpolated: no weigh-in that day \(12-day gap/);
+    expect(weightNote({ ...w, kind: "estimated", weigh_in: null, gap_days: 285 })).toMatch(/estimated across a 285-day gap .*a guess$/);
+    expect(weightNote({ ...w, kind: "carried", weigh_in: null, gap_days: 13 })).toMatch(/carried forward .* \(13 days before\)$/);
+    expect(weightNote({ ...w, origin: "pre_workout", kind: "weigh_in" })).toBe("70.7 kg, weighed before the ride");
   });
 
   it("labels steps", () => {

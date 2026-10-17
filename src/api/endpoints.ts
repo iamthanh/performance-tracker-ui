@@ -26,6 +26,7 @@ import type {
   Summary,
   ThresholdMetric,
   Thresholds,
+  WeightTrend,
   WorkoutWeight,
 } from "./types";
 
@@ -69,6 +70,7 @@ export const api = {
   updateEntry: (id: number, body: EntryInput) => request<NutritionEntry>(`/nutrition/entries/${id}`, json("PUT", body)),
   deleteEntry: (id: number) => request<void>(`/nutrition/entries/${id}`, { method: "DELETE" }),
   nutritionDaily: (p: { start_date: string; end_date: string }) => request<NutritionDay[]>(`/nutrition/daily${query(p)}`),
+  weight: (p: { start_date?: string; end_date?: string } = {}) => request<WeightTrend>(`/weight${query(p)}`),
   performance: (p: { start_date?: string; end_date?: string } = {}) => request<Performance>(`/performance${query(p)}`),
   performanceSettings: () => request<PerformanceSettings>("/performance/settings"),
   setPerformanceSettings: (body: { weights: PerformanceWeights; decay_per_week?: number }) =>

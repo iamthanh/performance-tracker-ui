@@ -135,14 +135,41 @@ export type Streams = Partial<Record<Channel, (number | null)[]>> & { time: numb
 
 // -- per-ride insights: per-kg, durability, W' balance, efforts ---------------------------------
 
+/** Where a weight value comes from: a real weigh-in, or filled from the weigh-ins around it. */
+export type WeightKind = "weigh_in" | "interpolated" | "estimated" | "carried";
+
 export interface RideWeight {
   kg: number;
-  /** Weighed before this workout, or the average of the week's weigh-ins up to its day (none over a month old). */
-  origin: "pre_workout" | "body";
-  /** The latest weigh-in used. */
+  /** Weighed for this ride, or the day's trend weight (see WeightDay). */
+  origin: "pre_workout" | "trend";
+  kind: WeightKind;
+  /** The ride's day. */
   date: string;
-  /** How many weigh-ins were averaged. */
-  count?: number;
+  /** The raw weigh-in of that day, when there was one. */
+  weigh_in: number | null;
+  /** The gap the value was filled across (days since the last weigh-in, when carried). */
+  gap_days: number;
+  last_weigh_in: string;
+}
+
+/** A day of the trend weight: smoothed from the weigh-ins; between them filled, and labelled so. Raw weigh-ins
+ *  are never changed. */
+export interface WeightDay {
+  date: string;
+  /** The trend (kg). */
+  kg: number;
+  kind: WeightKind;
+  /** That day's raw weigh-in (kg), on a weigh-in day. */
+  weigh_in: number | null;
+  gap_days: number;
+  last_weigh_in: string;
+}
+
+export interface WeightTrend {
+  days: WeightDay[];
+  counts: Record<WeightKind, number>;
+  interpolate_max_gap_days: number;
+  carry_days: number;
 }
 
 export interface Durability {

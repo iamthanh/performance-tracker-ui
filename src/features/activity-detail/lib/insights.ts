@@ -1,4 +1,4 @@
-import type { Durability, RideWeight } from "@/api";
+import type { Durability, RideWeight, WeightKind } from "@/api";
 import { formatDay } from "@/lib/dates";
 import { isNum, num } from "@/lib/format";
 
@@ -13,13 +13,28 @@ export function wPerKg(watts: number | null | undefined, kg: number | null | und
   return isNum(v) ? `${num(v, 2)} W/kg` : "—";
 }
 
-/** Where the weight behind the per-kg values comes from. */
-export function weightNote(weight: RideWeight): string {
-  return weight.origin === "pre_workout"
-    ? `${num(weight.kg, 1)} kg, weighed before the ride`
-    : weight.count && weight.count > 1
-      ? `${num(weight.kg, 1)} kg, average of ${weight.count} weigh-ins to ${formatDay(weight.date)}`
-      : `${num(weight.kg, 1)} kg, weigh-in of ${formatDay(weight.date)}`;
+/** A weight kind in a few words, for a hint. */
+export const WEIGHT_KIND_SHORT: Record<WeightKind, string> = {
+  weigh_in: "measured",
+  interpolated: "interpolated",
+  estimated: "estimated",
+  carried: "carried forward",
+};
+
+/** Where the weight behind the per-kg values comes from: measured, or filled and how. */
+export function weightNote(w: RideWeight): string {
+  const kg = `${num(w.kg, 1)} kg`;
+  if (w.origin === "pre_workout") return `${kg}, weighed before the ride`;
+  switch (w.kind) {
+    case "weigh_in":
+      return `${kg} trend weight; weigh-in that day ${num(w.weigh_in, 1)} kg`;
+    case "interpolated":
+      return `${kg}, interpolated: no weigh-in that day (${w.gap_days}-day gap between weigh-ins)`;
+    case "estimated":
+      return `${kg}, estimated across a ${w.gap_days}-day gap without weigh-ins: a guess`;
+    case "carried":
+      return `${kg}, carried forward from the weigh-in of ${formatDay(w.last_weigh_in)} (${w.gap_days} days before)`;
+  }
 }
 
 /** A durability step in kJ: "1,200". */
