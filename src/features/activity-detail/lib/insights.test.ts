@@ -1,6 +1,6 @@
 import type { Durability } from "@/api";
 
-import { durabilityChart, durabilityRows, perKg, stepLabel, stepTicks, timeTicks, worstFade, wPerKg } from "./insights";
+import { durabilityChart, durabilityRows, perKg, stepLabel, stepTicks, timeTicks, weightNote, worstFade, wPerKg } from "./insights";
 
 const D: Durability = {
   unit: "kJ",
@@ -19,6 +19,12 @@ describe("ride insights", () => {
     expect(perKg(null, 70)).toBeNull();
     expect(wPerKg(245, 70)).toBe("3.50 W/kg");
     expect(wPerKg(245, 0)).toBe("—");
+  });
+
+  it("says where the weight comes from", () => {
+    expect(weightNote({ kg: 70.71, origin: "body", date: "2020-03-10", count: 7 })).toMatch(/^70\.7 kg, average of 7 weigh-ins to /);
+    expect(weightNote({ kg: 70, origin: "body", date: "2020-03-10", count: 1 })).toMatch(/^70\.0 kg, weigh-in of /);
+    expect(weightNote({ kg: 68.4, origin: "pre_workout", date: "2020-03-10" })).toBe("68.4 kg, weighed before the ride");
   });
 
   it("labels steps", () => {
