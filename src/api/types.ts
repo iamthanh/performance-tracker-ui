@@ -142,11 +142,14 @@ export interface RideWeight {
   kg: number;
   /** Weighed for this ride, or the day's trend weight (see WeightDay). */
   origin: "pre_workout" | "trend";
+  /** What `kg` is: the measured value (a pre-ride weight) or the smoothed trend (also on a weigh-in day). */
+  value_is: "measured" | "trend";
   kind: WeightKind;
   /** The ride's day. */
   date: string;
-  /** The raw weigh-in of that day, when there was one. */
+  /** The raw weigh-in of that day, when there was one, and how many readings it averages. */
   weigh_in: number | null;
+  weigh_ins: number;
   /** The gap the value was filled across (days since the last weigh-in, when carried). */
   gap_days: number;
   last_weigh_in: string;
@@ -159,8 +162,10 @@ export interface WeightDay {
   /** The trend (kg). */
   kg: number;
   kind: WeightKind;
-  /** That day's raw weigh-in (kg), on a weigh-in day. */
+  /** That day's measured weight (kg, the mean of its readings when several), on a weigh-in day. */
   weigh_in: number | null;
+  /** How many readings `weigh_in` averages (pre-ride weights included). */
+  weigh_ins: number;
   gap_days: number;
   last_weigh_in: string;
 }

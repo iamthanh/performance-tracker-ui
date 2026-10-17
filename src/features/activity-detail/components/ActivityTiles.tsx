@@ -2,7 +2,7 @@ import type { ActivityDetail, RideWeight } from "@/api";
 import { StatTile } from "@/components";
 import { duration, isNum, num, pct } from "@/lib/format";
 
-import { perKg, WEIGHT_KIND_SHORT, weightNote, wPerKg } from "../lib/insights";
+import { perKg, weightBasis, weightNote, wPerKg } from "../lib/insights";
 
 /** The workout's headline numbers; power tiles only when it has power, per kg with a body weight. */
 export function ActivityTiles({ detail, weight }: { detail: ActivityDetail; weight: RideWeight | null }) {
@@ -41,7 +41,7 @@ export function ActivityTiles({ detail, weight }: { detail: ActivityDetail; weig
               hint={
                 <span title={weightNote(weight!)}>
                   {isNum(m?.normalized_power_w) ? "NP" : "Avg"} · {num(kg, 1)} kg{" "}
-                  {weight!.origin === "pre_workout" ? "(pre-ride)" : `(${WEIGHT_KIND_SHORT[weight!.kind]})`}
+                  ({weightBasis(weight!)})
                 </span>
               }
             />

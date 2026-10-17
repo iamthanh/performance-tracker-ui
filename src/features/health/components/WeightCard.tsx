@@ -20,7 +20,7 @@ import {
 import { useColors } from "@/hooks";
 import { addDays, dateTickFormatter, formatFullDay, today } from "@/lib/dates";
 import { num, signed } from "@/lib/format";
-import { saveWeightUnit, storedWeightUnit, type WeightUnit } from "@/lib/nutrition";
+import { fromKg, saveWeightUnit, storedWeightUnit, type WeightUnit } from "@/lib/nutrition";
 
 import { chartPoints, dayNumber, fromDayNumber, KIND_LABEL, tableRows, weightStats, type WeightPoint, type WeightRow } from "../lib/weight";
 
@@ -52,12 +52,12 @@ export function WeightCard() {
   return (
     <ChartCard
       title="Weight"
-      subtitle="Dots are your weigh-ins, exactly as measured. The line is the smoothed trend that ride pages use for W/kg: solid where weigh-ins surround it, dashed where it is a guess (a gap of over 6 weeks, or past your last weigh-in). Nothing filled in is stored."
+      subtitle="Dots are your measured weights (a day's mean when you weighed in more than once; pre-ride weights included). The line is the smoothed trend that ride pages use for W/kg: solid where weigh-ins surround it, dashed where it is a guess (a gap of over 6 weeks, or carried past your last weigh-in). Nothing filled in is stored."
       refetching={weight.isFetching}
       legend={[
         { label: "Weigh-in (measured)", color: c["series-1"], shape: "dot" },
         { label: "Trend", color: c["series-1"] },
-        { label: "Trend, estimated", color: c["text-muted"] },
+        { label: "Trend, estimated or carried", color: c["text-muted"] },
       ]}
       actions={
         <>
@@ -98,10 +98,10 @@ export function WeightCard() {
               hint={stats.latestWeighInDate ? `measured ${formatFullDay(stats.latestWeighInDate)}` : "none in this range"}
             />
             <StatTile
-              label="Trend now"
+              label="Latest trend"
               value={num(stats.trend, 1)}
               unit={unit}
-              hint={stats.trendKind === "weigh_in" ? "on a day with a weigh-in" : KIND_LABEL[stats.trendKind].toLowerCase()}
+              hint={`${formatFullDay(stats.trendDate)} · ${stats.trendKind === "weigh_in" ? "a weigh-in day" : KIND_LABEL[stats.trendKind].toLowerCase()}`}
             />
             <StatTile label="Change in this range" value={signed(stats.change, 1)} unit={unit} hint="trend, first to last day" />
             <StatTile
@@ -128,7 +128,15 @@ export function WeightCard() {
                   <TooltipBox
                     title={`${formatFullDay(p.date)} · ${KIND_LABEL[p.kind]}`}
                     rows={[
-                      ...(p.raw !== null ? [{ name: "Weigh-in (measured)", value: `${num(p.raw, 1)} ${unit}`, color: c["series-1"] }] : []),
+                      ...(p.raw !== null
+                        ? [
+                            {
+                              name: p.readings > 1 ? `Measured (mean of ${p.readings})` : "Measured",
+                              value: `${num(p.raw, 1)} ${unit}`,
+                              color: c["series-1"],
+                            },
+                          ]
+                        : []),
                       { name: p.kind === "weigh_in" ? "Trend" : "Trend (filled)", value: `${num(p.trend, 1)} ${unit}` },
                       ...(p.kind !== "weigh_in" ? [{ name: p.kind === "carried" ? "Since last weigh-in" : "Gap", value: `${p.gap} days` }] : []),
                     ]}
@@ -162,7 +170,7 @@ function WeighIn({ cx, cy, fill, opacity }: { cx?: number; cy?: number; fill?: s
 
 /** Table twin, newest first: every weigh-in as measured, and each stretch of filled days as one row. */
 function WeightTable({ rows, unit }: { rows: WeightRow[]; unit: WeightUnit }) {
-  const kg = (v: number) => num(unit === "kg" ? v : v / 0.45359237, 1);
+  const show = (kg: number) => num(fromKg(kg, unit), 1);
   return (
     <DataTable
       rows={[...rows].reverse()}
@@ -182,8 +190,8 @@ function WeightTable({ rows, unit }: { rows: WeightRow[]; unit: WeightUnit }) {
           headerClassName: "left",
           cellClassName: "left secondary",
         },
-        { key: "raw", header: `Weigh-in (${unit})`, cell: (r) => (r.type === "weigh_in" ? kg(r.raw) : "—") },
-        { key: "trend", header: `Trend (${unit})`, cell: (r) => (r.type === "weigh_in" ? kg(r.trend) : "filled") },
+        { key: "raw", header: `Weigh-in (${unit})`, cell: (r) => (r.type === "weigh_in" ? show(r.raw) : "—") },
+        { key: "trend", header: `Trend (${unit})`, cell: (r) => (r.type === "weigh_in" ? show(r.trend) : "filled") },
         {
           key: "gap",
           header: "Gap",

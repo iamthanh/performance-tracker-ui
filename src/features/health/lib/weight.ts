@@ -20,6 +20,8 @@ export type WeightPoint = {
   date: ISODate;
   kind: WeightKind;
   raw: number | null;
+  /** How many readings `raw` averages. */
+  readings: number;
   trend: number;
   solid: number | null;
   dashed: number | null;
@@ -29,7 +31,7 @@ export type WeightPoint = {
 const isGuess = (k: WeightKind | undefined) => k === "estimated" || k === "carried";
 
 export function chartPoints(days: WeightDay[], unit: WeightUnit): WeightPoint[] {
-  return days.map((d, i) => {
+  const points = days.map((d, i): WeightPoint => {
     const trend = fromKg(d.kg, unit);
     const guess = isGuess(d.kind) || isGuess(days[i - 1]?.kind) || isGuess(days[i + 1]?.kind);
     return {
@@ -37,12 +39,21 @@ export function chartPoints(days: WeightDay[], unit: WeightUnit): WeightPoint[] 
       date: d.date,
       kind: d.kind,
       raw: d.weigh_in === null ? null : fromKg(d.weigh_in, unit),
+      readings: d.weigh_ins,
       trend,
       solid: isGuess(d.kind) ? null : trend,
       dashed: guess ? trend : null,
       gap: d.gap_days,
     };
   });
+  // Days with no value at all (a gap of over a year) break both lines rather than being drawn across.
+  const out: WeightPoint[] = [];
+  points.forEach((p, i) => {
+    const before = points[i - 1];
+    if (before && p.day - before.day > 1) out.push({ ...before, day: (before.day + p.day) / 2, raw: null, solid: null, dashed: null });
+    out.push(p);
+  });
+  return out;
 }
 
 /** Table rows: each weigh-in, and each run of filled days collapsed into one row. */
@@ -83,6 +94,7 @@ export function weightStats(days: WeightDay[], unit: WeightUnit) {
     latestWeighInDate: lastWeighIn?.date ?? null,
     trend: fromKg(last.kg, unit),
     trendKind: last.kind,
+    trendDate: last.date,
     change: fromKg(last.kg, unit) - fromKg(first.kg, unit),
     counts,
   };

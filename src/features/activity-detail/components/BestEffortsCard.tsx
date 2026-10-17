@@ -10,11 +10,14 @@ import { wPerKg } from "../lib/insights";
 export function BestEffortsCard({
   efforts,
   kg,
+  wkg = "W/kg",
   selected,
   onSelect,
 }: {
   efforts: BestEffort[];
   kg: number | null;
+  /** The W/kg header, saying when the weight is filled (wkgHeader). */
+  wkg?: string;
   selected: Highlight | null;
   onSelect: (h: Highlight | null) => void;
 }) {
@@ -44,7 +47,7 @@ export function BestEffortsCard({
       cellClassName: "left",
     },
     { key: "w", header: "Avg power", cell: (e) => withUnit(e.avg_power_w, "W") },
-    ...(kg ? [{ key: "wkg", header: "W/kg", cell: (e: BestEffort) => wPerKg(e.avg_power_w, kg).replace(" W/kg", "") }] : []),
+    ...(kg ? [{ key: "wkg", header: wkg, cell: (e: BestEffort) => wPerKg(e.avg_power_w, kg).replace(" W/kg", "") }] : []),
     { key: "when", header: "When", cell: (e) => `${duration(e.start_s)} – ${duration(e.end_s)}` },
     ...(hasHr
       ? [

@@ -15,11 +15,22 @@ export function wPerKg(watts: number | null | undefined, kg: number | null | und
 
 /** A weight kind in a few words, for a hint. */
 export const WEIGHT_KIND_SHORT: Record<WeightKind, string> = {
-  weigh_in: "measured",
+  weigh_in: "trend, weighed that day",
   interpolated: "interpolated",
   estimated: "estimated",
   carried: "carried forward",
 };
+
+/** The weight's basis in a few words: "pre-ride" (measured for the ride) or the trend's kind. */
+export function weightBasis(w: RideWeight): string {
+  return w.origin === "pre_workout" ? "pre-ride" : WEIGHT_KIND_SHORT[w.kind];
+}
+
+/** A W/kg column header that says when the weight was not weighed that day: "W/kg (estimated)". */
+export function wkgHeader(w: RideWeight | null | undefined): string {
+  if (!w || w.origin === "pre_workout" || w.kind === "weigh_in") return "W/kg";
+  return `W/kg (${WEIGHT_KIND_SHORT[w.kind]})`;
+}
 
 /** Where the weight behind the per-kg values comes from: measured, or filled and how. */
 export function weightNote(w: RideWeight): string {
@@ -27,7 +38,7 @@ export function weightNote(w: RideWeight): string {
   if (w.origin === "pre_workout") return `${kg}, weighed before the ride`;
   switch (w.kind) {
     case "weigh_in":
-      return `${kg} trend weight; weigh-in that day ${num(w.weigh_in, 1)} kg`;
+      return `${kg} trend weight (smoothed); weigh-in that day ${num(w.weigh_in, 1)} kg${w.weigh_ins > 1 ? ` (mean of ${w.weigh_ins})` : ""}`;
     case "interpolated":
       return `${kg}, interpolated: no weigh-in that day (${w.gap_days}-day gap between weigh-ins)`;
     case "estimated":

@@ -7,6 +7,7 @@ const d = (date: string, kg: number, kind: WeightDay["kind"], weigh_in: number |
   kg,
   kind,
   weigh_in,
+  weigh_ins: weigh_in === null ? 0 : 1,
   gap_days: gap,
   last_weigh_in: date,
 });
@@ -22,11 +23,21 @@ const DAYS: WeightDay[] = [
 
 describe("weight trend", () => {
   it("keeps raw weigh-ins apart from the trend, and draws guesses dashed", () => {
-    const points = chartPoints(DAYS, "kg");
+    // (The fixture skips Jan 6 - Mar 3, which adds a break point; leave it out here.)
+    const points = chartPoints(DAYS, "kg").filter((p) => Number.isInteger(p.day));
     expect(points.map((p) => p.raw)).toEqual([70.4, null, null, 69.9, null, 72]);
     expect(points.map((p) => p.solid)).toEqual([70, 70.1, 70.2, 70.3, null, 72]);
     expect(points.map((p) => p.dashed)).toEqual([null, null, null, 70.3, 70.5, 72]); // joined at both ends
     expect(fromDayNumber(dayNumber("2020-03-04"))).toBe("2020-03-04");
+  });
+
+  it("breaks the lines where days have no value at all", () => {
+    const points = chartPoints([d("2016-12-14", 78, "weigh_in", 78), d("2018-06-26", 79, "weigh_in", 79)], "kg");
+    expect(points.map((p) => [p.solid, p.dashed, p.raw])).toEqual([
+      [78, null, 78],
+      [null, null, null],
+      [79, null, 79],
+    ]);
   });
 
   it("lists weigh-ins and collapses filled stretches in the table", () => {

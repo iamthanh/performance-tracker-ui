@@ -18,6 +18,7 @@ import { StreamsSection } from "./components/StreamsSection";
 import { WPrimeCard } from "./components/WPrimeCard";
 import { ZoneCard } from "./components/ZoneCard";
 import type { Highlight } from "./lib/highlight";
+import { wkgHeader } from "./lib/insights";
 import { isOnFoot } from "./lib/sport";
 
 /** One workout's analysis: headline numbers, per-second charts, zones, peak power, durability, W′ balance,
@@ -41,6 +42,7 @@ export function ActivityPage() {
   const m = d.analysis;
   const ins = insights.data;
   const kg = ins?.weight?.kg ?? null;
+  const wkg = wkgHeader(ins?.weight); // "W/kg (estimated)" when the weight was not weighed that day
   return (
     <>
       <ActivityHeader detail={d} />
@@ -57,6 +59,7 @@ export function ActivityPage() {
         <BestEffortsCard
           efforts={ins.best_efforts}
           kg={kg}
+          wkg={wkg}
           selected={highlight}
           onSelect={(h) => {
             setHighlight(h);
@@ -69,13 +72,13 @@ export function ActivityPage() {
         {m?.hr_zones ? (
           <ZoneCard title="Time in heart-rate zones" zones={m.hr_zones} unit="bpm" threshold={`Threshold ${num(m.threshold_hr)} bpm`} />
         ) : null}
-        {m && m.power_curve.length ? <PeakPowerCard detail={d} kg={kg} /> : null}
+        {m && m.power_curve.length ? <PeakPowerCard detail={d} kg={kg} wkg={wkg} /> : null}
         {streams.data?.lat && streams.data.lng ? <RouteCard lat={streams.data.lat} lng={streams.data.lng} /> : null}
       </div>
       {/* Full width: six durations in the table, a duration picker in the header. */}
       {ins?.durability ? <DurabilityCard durability={ins.durability} weight={ins.weight} /> : null}
       {ins?.w_prime ? <WPrimeCard w={ins.w_prime} /> : null}
-      {ins?.efforts ? <EffortsCard efforts={ins.efforts} kg={kg} /> : null}
+      {ins?.efforts ? <EffortsCard efforts={ins.efforts} kg={kg} wkg={wkg} /> : null}
       <FuelingCard source={d.activity.source} sourceId={d.activity.source_id} date={d.activity.local_date} />
       {d.laps.length > 1 ? <LapsTable laps={d.laps} running={d.activity.sport === "running"} /> : null}
     </>

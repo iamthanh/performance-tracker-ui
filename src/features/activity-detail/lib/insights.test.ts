@@ -1,6 +1,18 @@
 import type { Durability } from "@/api";
 
-import { durabilityChart, durabilityRows, perKg, stepLabel, stepTicks, timeTicks, weightNote, worstFade, wPerKg } from "./insights";
+import {
+  durabilityChart,
+  durabilityRows,
+  perKg,
+  stepLabel,
+  stepTicks,
+  timeTicks,
+  weightBasis,
+  weightNote,
+  wkgHeader,
+  worstFade,
+  wPerKg,
+} from "./insights";
 
 const D: Durability = {
   unit: "kJ",
@@ -22,12 +34,25 @@ describe("ride insights", () => {
   });
 
   it("says where the weight comes from, measured or filled", () => {
-    const w = { kg: 70.71, origin: "trend", date: "2020-03-10", weigh_in: 71.2, gap_days: 0, last_weigh_in: "2020-03-10" } as const;
-    expect(weightNote({ ...w, kind: "weigh_in" })).toBe("70.7 kg trend weight; weigh-in that day 71.2 kg");
+    const w = {
+      kg: 70.71,
+      origin: "trend",
+      value_is: "trend",
+      date: "2020-03-10",
+      weigh_in: 71.2,
+      weigh_ins: 2,
+      gap_days: 0,
+      last_weigh_in: "2020-03-10",
+    } as const;
+    expect(weightNote({ ...w, kind: "weigh_in" })).toBe("70.7 kg trend weight (smoothed); weigh-in that day 71.2 kg (mean of 2)");
+    expect(wkgHeader({ ...w, kind: "weigh_in" })).toBe("W/kg");
+    expect(wkgHeader({ ...w, kind: "estimated" })).toBe("W/kg (estimated)");
+    expect(wkgHeader({ ...w, origin: "pre_workout", kind: "carried" })).toBe("W/kg");
+    expect(weightBasis({ ...w, kind: "weigh_in" })).toBe("trend, weighed that day");
     expect(weightNote({ ...w, kind: "interpolated", weigh_in: null, gap_days: 12 })).toMatch(/interpolated: no weigh-in that day \(12-day gap/);
     expect(weightNote({ ...w, kind: "estimated", weigh_in: null, gap_days: 285 })).toMatch(/estimated across a 285-day gap .*a guess$/);
     expect(weightNote({ ...w, kind: "carried", weigh_in: null, gap_days: 13 })).toMatch(/carried forward .* \(13 days before\)$/);
-    expect(weightNote({ ...w, origin: "pre_workout", kind: "weigh_in" })).toBe("70.7 kg, weighed before the ride");
+    expect(weightNote({ ...w, origin: "pre_workout", value_is: "measured", kind: "weigh_in" })).toBe("70.7 kg, weighed before the ride");
   });
 
   it("labels steps", () => {
