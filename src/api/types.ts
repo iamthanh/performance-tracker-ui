@@ -127,9 +127,77 @@ export type Channel =
   | "altitude"
   | "lat"
   | "lng"
-  | "temperature";
+  | "temperature"
+  /** W' left (J): derived for a ride with power and an FTP. */
+  | "w_bal";
 
 export type Streams = Partial<Record<Channel, (number | null)[]>> & { time: number[] };
+
+// -- per-ride insights: per-kg, durability, W' balance, efforts ---------------------------------
+
+export interface RideWeight {
+  kg: number;
+  /** Weighed before this workout, or the latest body-weight measurement up to its day. */
+  origin: "pre_workout" | "body";
+  date: string;
+}
+
+export interface Durability {
+  /** Accumulated work in kJ per kg of body weight, or plain kJ without a weight. */
+  unit: "kJ/kg" | "kJ";
+  /** Work done before the effort may start: 0 (from the start), 10, 20 ... */
+  steps: number[];
+  total: number;
+  /** Best watts per step, null when too little of the ride was left after it. */
+  rows: { duration_s: number; watts: (number | null)[] }[];
+}
+
+export interface WPrimeMatch {
+  start_s: number;
+  low_at_s: number;
+  spent_j: number;
+  low_j: number;
+}
+
+export interface WPrime {
+  cp_w: number;
+  w_prime_j: number;
+  /** CP and W' from the critical-power fit of the year's best efforts, or the ride's FTP with a typical 20 kJ. */
+  origin: "fit" | "ftp";
+  min_j: number;
+  min_at_s: number;
+  matches: WPrimeMatch[];
+}
+
+export interface Effort {
+  start_s: number;
+  end_s: number;
+  duration_s: number;
+  avg_power_w: number;
+  max_power_w: number;
+  avg_hr: number | null;
+  max_hr: number | null;
+  avg_cadence: number | null;
+  work_kj: number;
+  pct_ftp: number;
+  zone: string;
+  w_prime_spent_j: number;
+}
+
+export interface Efforts {
+  ftp_w: number;
+  count: number;
+  time_above_s: number;
+  work_above_kj: number;
+  items: Effort[];
+}
+
+export interface Insights {
+  weight: RideWeight | null;
+  durability: Durability | null;
+  w_prime: WPrime | null;
+  efforts: Efforts | null;
+}
 
 export interface Totals {
   count: number;

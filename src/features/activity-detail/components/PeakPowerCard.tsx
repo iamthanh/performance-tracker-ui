@@ -16,12 +16,14 @@ import { useColors } from "@/hooks";
 import { addDays } from "@/lib/dates";
 import { durationLabel, isNum, num } from "@/lib/format";
 
+import { wPerKg } from "../lib/insights";
+
 const TICKS = [1, 5, 15, 60, 300, 1200, 3600, 10800];
 
 type Point = { d: number; ride: number; best: number | null };
 
-/** This ride's power curve against the rider's best of the 90 days up to it. */
-export function PeakPowerCard({ detail }: { detail: ActivityDetail }) {
+/** This ride's power curve against the rider's best of the 90 days up to it (with W/kg given a body weight). */
+export function PeakPowerCard({ detail, kg }: { detail: ActivityDetail; kg: number | null }) {
   const c = useColors();
   const day = detail.activity.local_date;
   const best = usePowerCurve({ start_date: addDays(day, -89), end_date: day }, true, false);
@@ -47,6 +49,7 @@ export function PeakPowerCard({ detail }: { detail: ActivityDetail }) {
           columns={[
             { key: "d", header: "Duration", cell: (p) => durationLabel(p.d) },
             { key: "ride", header: "This ride", cell: (p) => `${num(p.ride)} W` },
+            ...(kg ? [{ key: "wkg", header: "W/kg", cell: (p: Point) => wPerKg(p.ride, kg) }] : []),
             { key: "best", header: "90-day best", cell: (p) => watts(p.best) },
           ]}
         />
@@ -72,6 +75,7 @@ export function PeakPowerCard({ detail }: { detail: ActivityDetail }) {
                 title={`Best ${durationLabel(p.d)}`}
                 rows={[
                   { name: "This ride", value: `${num(p.ride)} W`, color: c["series-1"] },
+                  ...(kg ? [{ name: "Per kg", value: wPerKg(p.ride, kg) }] : []),
                   { name: "90-day best", value: watts(p.best), color: c["series-2"] },
                 ]}
               />

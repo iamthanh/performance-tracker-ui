@@ -13,6 +13,7 @@ export const queryKeys = {
   activities: (p: Params<"activities">) => ["activities", p] as const,
   activity: (source: string, id: string) => ["activity", source, id] as const,
   streams: (source: string, id: string, maxPoints: number) => ["streams", source, id, maxPoints] as const,
+  insights: (source: string, id: string) => ["insights", source, id] as const,
   summary: (p: Params<"summary">) => ["summary", p] as const,
   trainingLoad: (p: Params<"trainingLoad">) => ["training-load", p] as const,
   powerCurve: (p: Params<"powerCurve">) => ["power-curve", p] as const,
@@ -99,6 +100,9 @@ export const useNutritionEntries = (p: Params<"nutritionEntries">) =>
 export const useNutritionDaily = (p: Params<"nutritionDaily">) =>
   useQuery({ queryKey: queryKeys.nutritionDaily(p), queryFn: () => api.nutritionDaily(p), ...keep });
 
+export const useInsights = (source: string, id: string) =>
+  useQuery({ queryKey: queryKeys.insights(source, id), queryFn: () => api.insights(source, id) });
+
 export const useFueling = (source: string, id: string) =>
   useQuery({ queryKey: queryKeys.fueling(source, id), queryFn: () => api.fueling(source, id) });
 
@@ -116,7 +120,8 @@ export function useNutritionMutations() {
     setWorkoutWeight: useMutation({
       mutationFn: ({ source, id, pre_kg, post_kg }: { source: string; id: string; pre_kg: number | null; post_kg: number | null }) =>
         api.setWorkoutWeight(source, id, { pre_kg, post_kg }),
-      onSuccess,
+      // The pre-workout weight is what the ride's per-kg values use.
+      onSuccess: () => Promise.all([onSuccess(), client.invalidateQueries({ queryKey: ["insights"] })]),
     }),
   };
 }
