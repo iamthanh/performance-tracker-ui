@@ -7,6 +7,9 @@ import type {
   AnalysisResult,
   BestPower,
   BodyMeasurement,
+  Cardio,
+  CardioSettings,
+  CardioWeights,
   DailyMetric,
   EntryInput,
   Food,
@@ -21,6 +24,7 @@ import type {
   Performance,
   PerformanceSettings,
   PerformanceWeights,
+  RideCardio,
   SleepSession,
   Streams,
   Summary,
@@ -75,6 +79,11 @@ export const api = {
   performanceSettings: () => request<PerformanceSettings>("/performance/settings"),
   setPerformanceSettings: (body: { weights: PerformanceWeights; decay_per_week?: number }) =>
     request<PerformanceSettings>("/performance/settings", json("PUT", body)),
+  cardio: (p: { start_date?: string; end_date?: string } = {}) => request<Cardio>(`/cardio${query(p)}`),
+  cardioSettings: () => request<CardioSettings>("/cardio/settings"),
+  setCardioSettings: (body: { weights: CardioWeights; reference_power_w: number | null; reference_hr_bpm: number | null }) =>
+    request<CardioSettings>("/cardio/settings", json("PUT", body)),
+  rideCardio: (source: string, id: string) => request<RideCardio>(`/activities/${enc(source)}/${enc(id)}/cardio`),
   insights: (source: string, id: string) => request<Insights>(`/activities/${enc(source)}/${enc(id)}/insights`),
   fueling: (source: string, id: string) => request<Fueling>(`/activities/${enc(source)}/${enc(id)}/fueling`),
   setWorkoutWeight: (source: string, id: string, body: { pre_kg: number | null; post_kg: number | null; note?: string | null }) =>
