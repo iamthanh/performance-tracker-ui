@@ -20,7 +20,8 @@ export function DurabilityCard({ durability: d, weight }: { durability: Durabili
   const fade = worstFade(d);
   // A fixed floor of 90 % (lower when the fade is bigger), so a 2 % fade does not fill the chart.
   const low = Math.min(90, Math.floor(Math.min(...rows.flatMap((r) => r.cells.map((x) => x.ofFresh ?? 100))) / 5) * 5);
-  const ticks = Array.from({ length: (100 - low) / 5 + 1 }, (_, i) => low + i * 5);
+  const spacing = 100 - low > 40 ? 10 : 5;
+  const ticks = Array.from({ length: Math.floor((100 - low) / spacing) + 1 }, (_, i) => 100 - i * spacing).reverse();
   const legend = rows.map((r, i) => ({ label: `Best ${durationLabel(r.duration_s)}`, color: c[LINE_TOKENS[i % LINE_TOKENS.length]!] }));
   const subtitle = (
     <>
