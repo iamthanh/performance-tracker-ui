@@ -9,14 +9,14 @@ import { wPerKg } from "../lib/insights";
 const SHOWN = 15;
 
 /** Every effort above FTP, found automatically: what an interval session or a race actually contained. */
-export function EffortsCard({ efforts: e, kg }: { efforts: Efforts; kg: number | null }) {
+export function EffortsCard({ efforts: e, kg, wkg = "W/kg" }: { efforts: Efforts; kg: number | null; wkg?: string }) {
   const [all, setAll] = useState(false);
   const rows = all ? e.items : e.items.slice(0, SHOWN);
   const columns: Column<Effort>[] = [
     { key: "at", header: "Start", cell: (x) => duration(x.start_s), headerClassName: "left", cellClassName: "left" },
     { key: "dur", header: "Duration", cell: (x) => duration(x.duration_s) },
     { key: "avg", header: "Avg power", cell: (x) => withUnit(x.avg_power_w, "W") },
-    ...(kg ? [{ key: "wkg", header: "W/kg", cell: (x: Effort) => wPerKg(x.avg_power_w, kg).replace(" W/kg", "") }] : []),
+    ...(kg ? [{ key: "wkg", header: wkg, cell: (x: Effort) => wPerKg(x.avg_power_w, kg).replace(" W/kg", "") }] : []),
     { key: "ftp", header: "% FTP", cell: (x) => `${num(x.pct_ftp)}%` },
     { key: "zone", header: "Zone", cell: (x) => x.zone, headerClassName: "left", cellClassName: "left secondary" },
     { key: "max", header: "Max power", cell: (x) => withUnit(x.max_power_w, "W") },

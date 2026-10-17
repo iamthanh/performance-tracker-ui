@@ -1,71 +1,101 @@
-import type { BodyMeasurement } from "@/api";
+import type { WeightDay, WeightKind } from "@/api";
 import { addDays, daysBetween, type ISODate } from "@/lib/dates";
 import { fromKg, type WeightUnit } from "@/lib/nutrition";
 
-/** A day's weigh-in (kg) with the average of the week up to it, and the day as a number for a time axis. */
-export type WeightPoint = { date: ISODate; day: number; kg: number; avgKg: number; source: string };
-
-/** Days since 1970: a linear time axis, so years without weigh-ins show as the gap they are. */
+/** Days since 1970: a linear time axis, so gaps show as gaps. */
 export const dayNumber = (iso: ISODate) => daysBetween("1970-01-01", iso);
 export const fromDayNumber = (n: number): ISODate => addDays("1970-01-01", Math.round(n));
 
-/** One weight per day (the average of every source's, as the ride pages take it), oldest first, each with the
- *  average of the days' weights over the 7 days up to it. */
-export function weightPoints(rows: BodyMeasurement[]): WeightPoint[] {
-  const byDay = new Map<string, { sum: number; n: number; sources: Set<string> }>();
-  for (const r of rows) {
-    if (r.metric !== "weight_kg" || !(r.value > 0)) continue;
-    const date = r.ts.slice(0, 10);
-    const day = byDay.get(date) ?? { sum: 0, n: 0, sources: new Set<string>() };
-    day.sum += r.value;
-    day.n += 1;
-    day.sources.add(r.source);
-    byDay.set(date, day);
-  }
-  const days = [...byDay.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, d]) => ({ date, kg: d.sum / d.n, source: [...d.sources].sort().join(", ") }));
-  const out: WeightPoint[] = [];
-  let from = 0; // the first day of the 7 up to day i
-  let sum = 0;
-  days.forEach((d, i) => {
-    sum += d.kg;
-    while (daysBetween(days[from]!.date, d.date) > 6) sum -= days[from++]!.kg;
-    out.push({ ...d, day: dayNumber(d.date), avgKg: sum / (i - from + 1) });
-  });
-  return out;
-}
+export const KIND_LABEL: Record<WeightKind, string> = {
+  weigh_in: "Weigh-in",
+  interpolated: "Interpolated",
+  estimated: "Estimated (long gap)",
+  carried: "Carried forward",
+};
 
-/** The weigh-ins as chart points, with a break (no average) wherever more than a week passes between two, so the
- *  line does not draw a trend across a gap. */
-export function withBreaks<T extends { day: number }>(points: T[], gapDays = 7): (T | { day: number; avg: null })[] {
-  const out: (T | { day: number; avg: null })[] = [];
+/** A chart point: the raw weigh-in (dots, only where measured) and the trend split into a solid line (weigh-in and
+ *  interpolated days) and a dashed one (estimated and carried days, joined to the weigh-ins at their ends). */
+export type WeightPoint = {
+  day: number;
+  date: ISODate;
+  kind: WeightKind;
+  raw: number | null;
+  /** How many readings `raw` averages. */
+  readings: number;
+  trend: number;
+  solid: number | null;
+  dashed: number | null;
+  gap: number;
+};
+
+const isGuess = (k: WeightKind | undefined) => k === "estimated" || k === "carried";
+
+export function chartPoints(days: WeightDay[], unit: WeightUnit): WeightPoint[] {
+  const points = days.map((d, i): WeightPoint => {
+    const trend = fromKg(d.kg, unit);
+    const guess = isGuess(d.kind) || isGuess(days[i - 1]?.kind) || isGuess(days[i + 1]?.kind);
+    return {
+      day: dayNumber(d.date),
+      date: d.date,
+      kind: d.kind,
+      raw: d.weigh_in === null ? null : fromKg(d.weigh_in, unit),
+      readings: d.weigh_ins,
+      trend,
+      solid: isGuess(d.kind) ? null : trend,
+      dashed: guess ? trend : null,
+      gap: d.gap_days,
+    };
+  });
+  // Days with no value at all (a gap of over a year) break both lines rather than being drawn across.
+  const out: WeightPoint[] = [];
   points.forEach((p, i) => {
     const before = points[i - 1];
-    if (before && p.day - before.day > gapDays) out.push({ day: (before.day + p.day) / 2, avg: null });
+    if (before && p.day - before.day > 1) out.push({ ...before, day: (before.day + p.day) / 2, raw: null, solid: null, dashed: null });
     out.push(p);
   });
   return out;
 }
 
-/** The points in [start, end]. */
-export function between(points: WeightPoint[], start: ISODate, end: ISODate): WeightPoint[] {
-  return points.filter((p) => p.date >= start && p.date <= end);
+/** Table rows: each weigh-in, and each run of filled days collapsed into one row. */
+export type WeightRow =
+  | { type: "weigh_in"; date: ISODate; raw: number; trend: number }
+  | { type: "filled"; kind: Exclude<WeightKind, "weigh_in">; from: ISODate; to: ISODate; days: number; gap: number };
+
+export function tableRows(days: WeightDay[]): WeightRow[] {
+  const rows: WeightRow[] = [];
+  for (const d of days) {
+    if (d.kind === "weigh_in") {
+      rows.push({ type: "weigh_in", date: d.date, raw: d.weigh_in!, trend: d.kg });
+      continue;
+    }
+    const last = rows[rows.length - 1];
+    if (last?.type === "filled" && last.kind === d.kind && daysBetween(last.to, d.date) === 1) {
+      last.to = d.date;
+      last.days += 1;
+      last.gap = Math.max(last.gap, d.gap_days);
+    } else {
+      rows.push({ type: "filled", kind: d.kind, from: d.date, to: d.date, days: 1, gap: d.gap_days });
+    }
+  }
+  return rows;
 }
 
-/** Latest, change (7-day average, first to last) and lowest/highest weigh-in, in `unit`. */
-export function weightStats(points: WeightPoint[], unit: WeightUnit) {
-  if (!points.length) return null;
-  const first = points[0]!;
-  const last = points[points.length - 1]!;
-  const kgs = points.map((p) => p.kg);
+/** The range in numbers (in `unit`): the latest raw weigh-in, the trend now and its change, and days per kind. */
+export function weightStats(days: WeightDay[], unit: WeightUnit) {
+  if (!days.length) return null;
+  const weighIns = days.filter((d) => d.weigh_in !== null);
+  const lastWeighIn = weighIns[weighIns.length - 1];
+  const first = days[0]!;
+  const last = days[days.length - 1]!;
+  const counts = { weigh_in: 0, interpolated: 0, estimated: 0, carried: 0 } as Record<WeightKind, number>;
+  for (const d of days) counts[d.kind] += 1;
   return {
-    latest: fromKg(last.kg, unit),
-    latestDate: last.date,
-    average: fromKg(last.avgKg, unit),
-    change: fromKg(last.avgKg, unit) - fromKg(first.avgKg, unit),
-    low: fromKg(Math.min(...kgs), unit),
-    high: fromKg(Math.max(...kgs), unit),
-    count: points.length,
+    latestWeighIn: lastWeighIn ? fromKg(lastWeighIn.weigh_in!, unit) : null,
+    latestWeighInDate: lastWeighIn?.date ?? null,
+    trend: fromKg(last.kg, unit),
+    trendKind: last.kind,
+    trendDate: last.date,
+    change: fromKg(last.kg, unit) - fromKg(first.kg, unit),
+    counts,
   };
 }

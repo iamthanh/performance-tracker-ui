@@ -28,6 +28,8 @@ import {
   worstFade,
   wPerKg,
   type DurabilityRow,
+  weightBasis,
+  wkgHeader,
 } from "../lib/insights";
 
 // Six lines in one chart cannot all be told apart (validated palette: neighbouring hues collide), so the chart
@@ -75,6 +77,7 @@ export function DurabilityCard({ durability: d, weight }: { durability: Durabili
       start. {fade ? `Biggest fade: best ${durationLabel(fade.duration_s)} at ${pct(fade.ofFresh, 0)} ${stepLabel(fade.step, d.unit, kg).replace("After", "after")}.` : ""}
       {" "}It shows what you rode: a fade means fatigue only if you went hard again late in the ride.
       {weight ? null : " Add your pre-ride weight under Fueling to see the work per kg too, as pros measure it."}
+      {weight && wkgHeader(weight) !== "W/kg" ? ` Per-kg values use a ${weightBasis(weight)} weight.` : null}
     </>
   );
   return (

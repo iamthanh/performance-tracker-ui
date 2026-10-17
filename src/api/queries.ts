@@ -14,6 +14,7 @@ export const queryKeys = {
   activity: (source: string, id: string) => ["activity", source, id] as const,
   streams: (source: string, id: string, maxPoints: number) => ["streams", source, id, maxPoints] as const,
   insights: (source: string, id: string) => ["insights", source, id] as const,
+  weight: (p: Params<"weight">) => ["weight", p] as const,
   // Both under one prefix, so saving the weights refreshes the index.
   performance: (p: Params<"performance">) => ["performance", "index", p] as const,
   performanceSettings: ["performance", "settings"] as const,
@@ -102,6 +103,9 @@ export const useNutritionEntries = (p: Params<"nutritionEntries">) =>
 
 export const useNutritionDaily = (p: Params<"nutritionDaily">) =>
   useQuery({ queryKey: queryKeys.nutritionDaily(p), queryFn: () => api.nutritionDaily(p), ...keep });
+
+export const useWeight = (p: Params<"weight"> = {}) =>
+  useQuery({ queryKey: queryKeys.weight(p), queryFn: () => api.weight(p) });
 
 export const usePerformance = (p: Params<"performance">) =>
   useQuery({ queryKey: queryKeys.performance(p), queryFn: () => api.performance(p), ...keep });
