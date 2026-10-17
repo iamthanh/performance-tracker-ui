@@ -1,0 +1,81 @@
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 28px 16px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  text-align: center;
+  cursor: pointer;
+}
+.dropzone:hover,
+.dropzone.dragging {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+}
+.dropzone.disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.import-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.import-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 10px 12px;
+}
+.import-item + .import-item {
+  border-top: 1px solid var(--grid);
+}
+.import-file {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.import-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 550;
+}
+.import-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+.import-item.done .import-status,
+.import-item.error .import-status {
+  grid-column: 1 / -1;
+  justify-content: space-between;
+}
+.import-done {
+  color: var(--success-text);
+}
+.import-done strong {
+  color: var(--text-primary);
+}
+.import-error {
+  color: var(--critical-text);
+}
+.import-note {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.import-summary {
+  margin-right: auto;
+  align-self: center;
+}

@@ -326,3 +326,30 @@ export interface Fueling {
   carbs_burned_g_estimate: number | null;
   carbs_burned_g_per_h_estimate: number | null;
 }
+
+// -- importing a file ------------------------------------------------------------------------
+
+export interface ImportResult {
+  /** False when the same file was imported before (it was updated). */
+  created: boolean;
+  activity: {
+    source: string;
+    source_id: string;
+    name: string;
+    local_date: string;
+    start_time: string;
+    activity_type: string;
+    sport: Sport;
+    duration_s: number | null;
+    moving_s: number | null;
+    distance_m: number | null;
+    samples: number;
+    channels: string[];
+    tss: number | null;
+    tss_method: TssMethod;
+    intensity_factor: number | null;
+    normalized_power_w: number | null;
+  };
+  /** The same workout already stored from another service (the lists show it once). */
+  also_stored_as: { source: string; source_id: string; name: string | null }[];
+}

@@ -26,6 +26,32 @@ export function query(params: Params = {}): string {
   return text ? `?${text}` : "";
 }
 
+/** The error for a failed response: the API's own `{"detail": …}` message when there is one. */
+export function apiError(status: number, statusText: string, body: string): ApiError {
+  let detail = statusText;
+  let fromApi = false; // the API always answers errors with a JSON {"detail": ...}
+  try {
+    const parsed = JSON.parse(body) as { detail?: unknown };
+    if (typeof parsed.detail === "string") {
+      detail = parsed.detail;
+      fromApi = true;
+    } else if (Array.isArray(parsed.detail)) {
+      detail = parsed.detail
+        .map((d: { msg?: string; loc?: unknown[] }) => {
+          const field = d.loc?.[d.loc.length - 1];
+          return typeof field === "string" ? `${field}: ${d.msg}` : d.msg;
+        })
+        .join("; ");
+      fromApi = true;
+    }
+  } catch {
+    // not JSON: an error page from a proxy in front of the API
+  }
+  // Vite's dev proxy answers a refused connection with an empty 500; gateways use 502/504.
+  const unreachable = !fromApi && [500, 502, 504].includes(status);
+  return new ApiError(status, unreachable ? UNREACHABLE : detail, unreachable);
+}
+
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
@@ -33,30 +59,7 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   } catch {
     throw new ApiError(0, UNREACHABLE, true);
   }
-  if (!response.ok) {
-    let detail = response.statusText;
-    let fromApi = false; // the API always answers errors with a JSON {"detail": ...}
-    try {
-      const body = (await response.json()) as { detail?: unknown };
-      if (typeof body.detail === "string") {
-        detail = body.detail;
-        fromApi = true;
-      } else if (Array.isArray(body.detail)) {
-        detail = body.detail
-          .map((d: { msg?: string; loc?: unknown[] }) => {
-            const field = d.loc?.[d.loc.length - 1];
-            return typeof field === "string" ? `${field}: ${d.msg}` : d.msg;
-          })
-          .join("; ");
-        fromApi = true;
-      }
-    } catch {
-      // not JSON: an error page from a proxy in front of the API
-    }
-    // Vite's dev proxy answers a refused connection with an empty 500; gateways use 502/504.
-    const unreachable = !fromApi && [500, 502, 504].includes(response.status);
-    throw new ApiError(response.status, unreachable ? UNREACHABLE : detail, unreachable);
-  }
+  if (!response.ok) throw apiError(response.status, response.statusText, await response.text().catch(() => ""));
   if (response.status === 204) return undefined as T; // a delete: no body
   return (await response.json()) as T;
 }

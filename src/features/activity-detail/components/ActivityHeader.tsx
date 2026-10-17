@@ -9,7 +9,8 @@ import { calendarMonthPath } from "@/lib/paths";
 /** Back link to the workout's day, its name, sport and where it was recorded. */
 export function ActivityHeader({ detail }: { detail: ActivityDetail }) {
   const a = detail.activity;
-  const recordedWith = [detail.device, a.source === "strava" ? "via Strava" : `via ${a.source}`].filter(Boolean).join(" ");
+  const via = a.source === "strava" ? "via Strava" : a.source === "upload" ? "· imported from a file" : `via ${a.source}`;
+  const recordedWith = [detail.device, via].filter(Boolean).join(" ");
   return (
     <PageHeader
       eyebrow={<Link to={calendarMonthPath(a.local_date)}>← {formatFullDay(a.local_date)}</Link>}
