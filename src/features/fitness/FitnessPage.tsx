@@ -2,6 +2,7 @@ import { EmptyCard, ErrorCard, LoadingCard, PageHeader, RangePresetPicker } from
 import { useRangePreset } from "@/hooks";
 import { addDays } from "@/lib/dates";
 
+import { CardioSection } from "./components/CardioSection";
 import { EnergyCard } from "./components/EnergyCard";
 import { FitnessFatigueCard } from "./components/FitnessFatigueCard";
 import { FitnessTiles } from "./components/FitnessTiles";
@@ -12,8 +13,8 @@ import { WeeklyTssCard } from "./components/WeeklyTssCard";
 import { useFitnessData } from "./hooks/useFitnessData";
 import { ENERGY_MAX_DAYS, maxDate } from "./lib/energy";
 
-/** The performance index (how good you are) over a date range, then fitness, fatigue and form (how much you
- *  trained): TrainingPeaks' Performance Management Chart. */
+/** The performance index (how good you are) and the cardio index (how fit your heart is) over a date range, then
+ *  fitness, fatigue and form (how much you trained): TrainingPeaks' Performance Management Chart. */
 export function FitnessPage() {
   const { presetId, setPresetId, preset, range } = useRangePreset("90d");
   const { load, weeks, days, points, weekRows, tick, latest, ramp, unscored } = useFitnessData(range, !!preset.all);
@@ -22,11 +23,12 @@ export function FitnessPage() {
     <>
       <PageHeader
         title="Fitness"
-        description="Your performance index from best efforts, then fitness (CTL), fatigue (ATL) and form (TSB) from daily training stress, like the Performance Management Chart."
+        description="Your performance index from best efforts and your cardio fitness from heart rate against power, then fitness (CTL), fatigue (ATL) and form (TSB) from daily training stress, like the Performance Management Chart."
         actions={<RangePresetPicker value={presetId} onChange={setPresetId} />}
       />
 
       <PerformanceSection range={range} />
+      <CardioSection range={range} />
 
       {load.isError ? (
         <ErrorCard error={load.error} />

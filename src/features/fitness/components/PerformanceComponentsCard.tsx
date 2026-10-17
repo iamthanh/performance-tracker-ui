@@ -1,16 +1,10 @@
-import { CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-
 import type { Performance, PerformanceDay } from "@/api";
-import { axisProps, Card, CardHeader, gridProps, lineCursor, tooltipContent, TooltipBox } from "@/components";
-import { useColors } from "@/hooks";
-import { formatFullDay } from "@/lib/dates";
-import { num, signed } from "@/lib/format";
-import type { Token } from "@/lib/theme";
+import { Card, CardHeader } from "@/components";
+import { num } from "@/lib/format";
 
 import { change, componentSeries, daysSinceTested, STALE_DAYS, weightShares } from "../lib/performance";
 import type { DateTick } from "../lib/types";
-
-type Point = { date: string; value: number | null };
+import { MiniChart } from "./MiniChart";
 
 /** One small chart per component (each an index, 100 = baseline), with its weight and when it was last tested;
  *  aerobic efficiency alongside (not in the score). */
@@ -45,6 +39,7 @@ export function PerformanceComponentsCard({ perf, days, tick }: { perf: Performa
               token="series-1"
               digits={1}
               tick={tick}
+              syncId="perf"
             />
           );
         })}
@@ -58,75 +53,9 @@ export function PerformanceComponentsCard({ perf, days, tick }: { perf: Performa
           token="series-3"
           digits={2}
           tick={tick}
+          syncId="perf"
         />
       </div>
     </Card>
-  );
-}
-
-function MiniChart({
-  title,
-  note,
-  value,
-  delta,
-  deltaDigits = 1,
-  status,
-  stale = false,
-  flag,
-  data,
-  baseline = false,
-  token,
-  digits,
-  tick,
-}: {
-  title: string;
-  note: string;
-  value: string;
-  delta: number | null;
-  deltaDigits?: number;
-  status?: string;
-  stale?: boolean;
-  /** A caveat on the value (e.g. it rests on an estimated weight). */
-  flag?: string;
-  data: Point[];
-  baseline?: boolean;
-  token: Token;
-  digits: number;
-  tick: DateTick;
-}) {
-  const c = useColors();
-  return (
-    <section className="mini" aria-label={title}>
-      <div className="mini-head">
-        <strong>{title}</strong>
-        <span className="mini-value">
-          {value} <span className="muted small">({signed(delta, deltaDigits)} in range)</span>
-        </span>
-      </div>
-      <div className="small muted">{note}</div>
-      {status ? <div className={stale ? "small mini-stale" : "small muted"}>{stale ? `⚠ ${status}` : status}</div> : null}
-      {flag ? <div className="small mini-stale">⚠ {flag}</div> : null}
-      <ResponsiveContainer width="100%" height={110}>
-        <ComposedChart data={data} syncId="perf" syncMethod="value" margin={{ top: 6, right: 8, bottom: 0, left: -8 }}>
-          <CartesianGrid {...gridProps(c)} />
-          <XAxis dataKey="date" {...axisProps(c)} tickFormatter={tick} minTickGap={50} />
-          <YAxis
-            {...axisProps(c)}
-            width={44}
-            domain={["auto", "auto"]}
-            tickCount={3}
-            tickFormatter={(v: number) => num(v, digits > 1 ? 2 : 0)}
-          />
-          {baseline ? <ReferenceLine y={100} stroke={c.axis} strokeDasharray="4 3" /> : null}
-          <Tooltip
-            cursor={lineCursor(c)}
-            content={tooltipContent<Point>((p) => (
-              <TooltipBox title={formatFullDay(p.date)} rows={[{ name: title, value: num(p.value, digits), color: c[token] }]} />
-            ))}
-          />
-          <Line dataKey="value" stroke={c[token]} strokeWidth={2} dot={false} isAnimationActive={false} />
-        </ComposedChart>
-      </ResponsiveContainer>
-    </section>
   );
 }

@@ -587,3 +587,106 @@ export interface Performance {
   days: PerformanceDay[];
   events: PerformanceEvent[];
 }
+
+// -- cardio index ----------------------------------------------------------------------------------
+
+export const CARDIO_SCORED = ["aerobic", "resting_hr", "hr_recovery"] as const;
+export type CardioScored = (typeof CARDIO_SCORED)[number];
+export type CardioComponent = CardioScored | "drift";
+export type CardioWeights = Record<CardioScored, number>;
+
+export interface CardioSettings {
+  /** null: automatic (the median power / heart rate of your steady riding). */
+  reference_power_w: number | null;
+  reference_hr_bpm: number | null;
+  weights: CardioWeights;
+}
+
+/** What the index rests on: the reference, the slopes fitted within rides and the corrections. */
+export interface CardioModel {
+  reference: { power_w: number; hr_bpm: number; power_auto: boolean; hr_auto: boolean };
+  slope_bpm_per_w: number;
+  drift_bpm_per_1000kj: number;
+  /** What each condition adds to heart rate: indoors (bpm), heat (bpm per °C above heat_from_c), form (bpm per
+   *  point of TSB: below 0, tired, heart rate reads low). */
+  corrections: { indoor_bpm: number; heat_bpm_per_c: number; heat_from_c: number; form_bpm_per_tsb: number };
+  /** False where there were too few rides and a default was used. */
+  fitted: Record<"slope" | "indoor" | "heat" | "form" | "recovery", boolean>;
+  rides: number;
+  blocks: number;
+  /** Rides left out as sensor faults (far from the rides around them once corrected). */
+  outliers: number;
+}
+
+export interface CardioDay {
+  date: string;
+  /** Weighted geometric mean of the scored component indexes; 100 = your baseline. */
+  score: number | null;
+  /** Median corrected heart rate at the reference power over the window (lower is fitter). */
+  hr_at_ref: number | null;
+  /** The same as power at the reference heart rate (higher is fitter). */
+  power_at_ref: number | null;
+  /** Rides in the window. */
+  rides: number;
+  tsb: number | null;
+  vo2max: number | null;
+  vo2max_basis: {
+    resting: "measured" | "setting" | "assumed";
+    resting_hr: number;
+    max_hr: number | null;
+    kg: number;
+    weight_kind: string;
+  } | null;
+  components: Record<CardioComponent, { value: number | null; index: number | null }>;
+}
+
+/** One ride's heart rate at the reference power, raw and corrected to outdoors, cool and fresh. */
+export interface CardioRide {
+  source: string;
+  source_id: string;
+  name: string | null;
+  date: string;
+  indoor: boolean;
+  temp_c: number | null;
+  tsb: number;
+  /** Steady blocks in its value. */
+  blocks: number;
+  raw_bpm: number | null;
+  /** Far from the rides around it once corrected (a sensor problem): left out, `bpm` null. */
+  outlier: boolean;
+  bpm: number | null;
+  power_w: number | null;
+  /** What each condition added to its heart rate (bpm), taken out of `bpm`. */
+  corrections: { indoor: number; heat: number; form: number };
+  recovery_bpm: number | null;
+  drift: number | null;
+}
+
+export interface Cardio {
+  weights: CardioWeights;
+  settings: CardioSettings;
+  window_days: number;
+  components: {
+    key: CardioComponent;
+    label: string;
+    description: string;
+    unit: string;
+    scored: boolean;
+    lower_is_better: boolean;
+    baseline: number | null;
+  }[];
+  model: CardioModel | null;
+  days: CardioDay[];
+  rides: CardioRide[];
+}
+
+export interface RideCardio {
+  model: CardioModel | null;
+  /** `start_s` in riding time (pauses left out); `clock_s` on the stream charts' clock. */
+  blocks: { start_s: number; clock_s: number | null; watts: number; bpm: number; temp_c: number | null; kj_before: number; used: boolean; warm_up: boolean }[];
+  ride: CardioRide | null;
+  /** The median of the other rides of the window up to this one; `bpm_at_conditions` puts it back to this ride's
+   *  conditions (indoors, heat, form), to set against its own blocks. */
+  normal: { bpm: number; power_w: number; rides: number; bpm_at_conditions: number; difference_bpm: number | null } | null;
+  recoveries: { peak_bpm: number; drop_bpm: number; effort_w: number; recovery_w: number; counts: boolean }[];
+}

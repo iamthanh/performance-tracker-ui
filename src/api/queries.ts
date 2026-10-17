@@ -18,6 +18,10 @@ export const queryKeys = {
   // Both under one prefix, so saving the weights refreshes the index.
   performance: (p: Params<"performance">) => ["performance", "index", p] as const,
   performanceSettings: ["performance", "settings"] as const,
+  // All under one prefix, so saving the settings refreshes the index and every ride's card.
+  cardio: (p: Params<"cardio">) => ["cardio", "index", p] as const,
+  cardioSettings: ["cardio", "settings"] as const,
+  rideCardio: (source: string, id: string) => ["cardio", "ride", source, id] as const,
   summary: (p: Params<"summary">) => ["summary", p] as const,
   trainingLoad: (p: Params<"trainingLoad">) => ["training-load", p] as const,
   powerCurve: (p: Params<"powerCurve">) => ["power-curve", p] as const,
@@ -121,6 +125,23 @@ export function useSetPerformanceSettings() {
     onSuccess: () => client.invalidateQueries({ queryKey: ["performance"] }),
   });
 }
+
+export const useCardio = (p: Params<"cardio">) =>
+  useQuery({ queryKey: queryKeys.cardio(p), queryFn: () => api.cardio(p), ...keep });
+
+export const useCardioSettings = () => useQuery({ queryKey: queryKeys.cardioSettings, queryFn: api.cardioSettings });
+
+/** Saving the reference or weights re-scores the index and every ride against it. */
+export function useSetCardioSettings() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: api.setCardioSettings,
+    onSuccess: () => client.invalidateQueries({ queryKey: ["cardio"] }),
+  });
+}
+
+export const useRideCardio = (source: string, id: string) =>
+  useQuery({ queryKey: queryKeys.rideCardio(source, id), queryFn: () => api.rideCardio(source, id), retry: false });
 
 export const useInsights = (source: string, id: string) =>
   useQuery({ queryKey: queryKeys.insights(source, id), queryFn: () => api.insights(source, id) });
