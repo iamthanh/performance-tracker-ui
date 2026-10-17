@@ -40,13 +40,13 @@ it("summarises W' balance and warns when it went below zero", () => {
   const w: WPrime = {
     cp_w: 250,
     w_prime_j: 20000,
-    origin: "default",
+    origin: "ftp",
     min_j: -1500,
     min_at_s: 3600,
     matches: [{ start_s: 1800, low_at_s: 1860, spent_j: 6000, low_j: 14000 }],
   };
   render(<WPrimeCard w={w} />);
-  expect(screen.getByText("Default")).toBeInTheDocument();
+  expect(screen.getByText("Typical default")).toBeInTheDocument();
   expect(screen.getByText(/went below zero/)).toBeInTheDocument();
   expect(screen.getByText("14.0 kJ (70%)")).toBeInTheDocument();
 });

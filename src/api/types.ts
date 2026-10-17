@@ -162,8 +162,8 @@ export interface WPrimeMatch {
 export interface WPrime {
   cp_w: number;
   w_prime_j: number;
-  /** From the critical-power fit of the year's best efforts, or a typical default. */
-  origin: "fit" | "default";
+  /** CP and W' from the critical-power fit of the year's best efforts, or the ride's FTP with a typical 20 kJ. */
+  origin: "fit" | "ftp";
   min_j: number;
   min_at_s: number;
   matches: WPrimeMatch[];

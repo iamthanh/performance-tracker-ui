@@ -14,8 +14,10 @@ export function WPrimeCard({ w }: { w: WPrime }) {
         title="W′ balance"
         subtitle={
           <>
-            W′ is the work you can do above critical power before you must ease off; it refills below CP. CP is your FTP for the
-            ride; W′ {w.origin === "fit" ? "is fitted to your best efforts of the year up to it" : "is a typical 20 kJ (too few all-out efforts to fit yours)"}.
+            W′ is the work you can do above critical power (CP) before you must ease off; it refills below CP.{" "}
+            {w.origin === "fit"
+              ? "CP and W′ are fitted to your best 3–30 minute efforts of the year up to this ride."
+              : "CP is your FTP for the ride and W′ a typical 20 kJ (too few all-out efforts to fit yours)."}{" "}
             It is a model: treat the numbers as estimates.
           </>
         }
@@ -23,12 +25,13 @@ export function WPrimeCard({ w }: { w: WPrime }) {
       <div className="tiles" style={{ marginBottom: 12 }}>
         <StatTile label="Matches burned" value={num(w.matches.length)} hint="Drops of 2 kJ or more" />
         <StatTile label="Lowest W′" value={kj(w.min_j)} unit="kJ" hint={`${pct(lowShare, 0)} left, at ${duration(w.min_at_s)}`} />
-        <StatTile label="W′" value={kj(w.w_prime_j)} unit="kJ" hint={w.origin === "fit" ? "Fitted" : "Default"} />
-        <StatTile label="Critical power" value={num(w.cp_w)} unit="W" hint="Your FTP for the ride" />
+        <StatTile label="W′" value={kj(w.w_prime_j)} unit="kJ" hint={w.origin === "fit" ? "Fitted" : "Typical default"} />
+        <StatTile label="Critical power" value={num(w.cp_w)} unit="W" hint={w.origin === "fit" ? "Fitted" : "Your FTP for the ride"} />
       </div>
       {w.min_j < 0 ? (
         <p className="small muted" role="note">
-          W′ went below zero: the ride did more above CP than the model allows, so your FTP or W′ is probably set too low.
+          W′ went below zero: the ride did more above CP than the model allows. Either your CP and W′ are underestimated (this
+          ride beat them), or you recovered faster between efforts than the model assumes, which is common in trained riders.
         </p>
       ) : null}
       {w.matches.length ? (
