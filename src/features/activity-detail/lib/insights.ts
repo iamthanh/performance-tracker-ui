@@ -76,3 +76,17 @@ export function worstFade(d: Durability): { duration_s: number; ofFresh: number;
   }
   return worst;
 }
+
+/** Time-axis ticks at the work done by round elapsed times, leaving out marks that would crowd the previous
+ *  one (a stop adds time but no work): at least `minGap` (a share of the axis) apart. */
+export function timeTicks(marks: { time_s: number; kj: number }[], last: number, minGap = 0.06): { kj: number; time_s: number }[] {
+  const out: { kj: number; time_s: number }[] = [];
+  let prev = 0; // the "Start" tick of the kJ axis
+  for (const m of marks) {
+    if (m.kj > last) break;
+    if (last > 0 && (m.kj - prev) / last < minGap) continue;
+    out.push({ kj: m.kj, time_s: m.time_s });
+    prev = m.kj;
+  }
+  return out;
+}

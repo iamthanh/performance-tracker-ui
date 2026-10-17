@@ -1,6 +1,6 @@
 import type { Durability } from "@/api";
 
-import { durabilityChart, durabilityRows, perKg, stepLabel, stepTicks, worstFade, wPerKg } from "./insights";
+import { durabilityChart, durabilityRows, perKg, stepLabel, stepTicks, timeTicks, worstFade, wPerKg } from "./insights";
 
 const D: Durability = {
   unit: "kJ",
@@ -48,5 +48,18 @@ describe("ride insights", () => {
   it("finds the biggest fade at each duration's last step", () => {
     expect(worstFade(D)).toEqual({ duration_s: 1200, ofFresh: 87.5, step: 100 });
     expect(worstFade({ ...D, steps: [0], rows: [{ duration_s: 60, watts: [300] }] })).toBeNull();
+  });
+
+  it("places time ticks on the kJ axis, skipping the ones a stop would crowd", () => {
+    const marks = [
+      { time_s: 1800, kj: 360 },
+      { time_s: 3600, kj: 365 }, // a café stop: half an hour, 5 kJ
+      { time_s: 5400, kj: 540 },
+      { time_s: 7200, kj: 720 },
+    ];
+    expect(timeTicks(marks, 600)).toEqual([
+      { kj: 360, time_s: 1800 },
+      { kj: 540, time_s: 5400 },
+    ]);
   });
 });

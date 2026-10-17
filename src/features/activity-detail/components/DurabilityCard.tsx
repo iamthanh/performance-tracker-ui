@@ -15,10 +15,20 @@ import {
   Y_AXIS_WIDTH,
 } from "@/components";
 import { useColors } from "@/hooks";
-import { durationLabel, isNum, num, pct } from "@/lib/format";
+import { duration, durationLabel, elapsedLabel, isNum, num, pct } from "@/lib/format";
 import type { Token } from "@/lib/theme";
 
-import { durabilityChart, durabilityRows, stepLabel, stepTicks, stepText, worstFade, wPerKg, type DurabilityRow } from "../lib/insights";
+import {
+  durabilityChart,
+  durabilityRows,
+  stepLabel,
+  stepTicks,
+  stepText,
+  timeTicks,
+  worstFade,
+  wPerKg,
+  type DurabilityRow,
+} from "../lib/insights";
 
 // Six lines in one chart cannot all be told apart (validated palette: neighbouring hues collide), so the chart
 // shows three durations at a time in the validated categorical order; the table always has all six.
@@ -46,6 +56,10 @@ export function DurabilityCard({ durability: d, weight }: { durability: Durabili
   const kg = weight?.kg ?? null;
   const last = d.steps[d.steps.length - 1] ?? 0;
   const dots = d.steps.length <= 15; // many 100 kJ steps read better as plain lines
+  // The second axis: elapsed ride time, placed at the work done by then (it stretches where the riding was hard).
+  const timeMarks = timeTicks(d.time_marks ?? [], last);
+  const timeAt = new Map(timeMarks.map((m) => [m.kj, m.time_s]));
+  const stepTime = (step: number) => d.step_times_s?.[d.steps.indexOf(step)];
   const legend = shown.map((r) => ({ label: `Best ${durationLabel(r.duration_s)}`, color: colorOf(r) }));
   const picker = (
     <Segmented
@@ -68,7 +82,7 @@ export function DurabilityCard({ durability: d, weight }: { durability: Durabili
       {d.steps.length < 2 ? (
         <p className="small muted">The ride was too short to compare fresh and fatigued efforts.</p>
       ) : (
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={timeMarks.length ? 248 : 220}>
           <LineChart data={data} margin={CHART_MARGIN}>
             <CartesianGrid {...gridProps(c)} />
             <XAxis
@@ -79,13 +93,26 @@ export function DurabilityCard({ durability: d, weight }: { durability: Durabili
               tickFormatter={(s: number) => (s === 0 ? "Start" : `${stepText(s)} ${d.unit}`)}
               {...axisProps(c)}
             />
+            {timeMarks.length ? (
+              <XAxis
+                xAxisId="time"
+                dataKey="step"
+                type="number"
+                domain={[0, last]}
+                ticks={timeMarks.map((m) => m.kj)}
+                tickFormatter={(kj: number) => elapsedLabel(timeAt.get(kj) ?? 0)}
+                {...axisProps(c)}
+                axisLine={false}
+                height={22}
+              />
+            ) : null}
             <YAxis {...axisProps(c)} width={Y_AXIS_WIDTH} domain={[low, 100]} ticks={ticks} tickFormatter={(v: number) => `${v}%`} allowDecimals={false} />
             <ReferenceLine y={100} stroke={c.axis} />
             <Tooltip
               cursor={lineCursor(c)}
               content={tooltipContent<Record<string, number | null>>((p) => (
                 <TooltipBox
-                  title={stepLabel(p.step!, d.unit, kg)}
+                  title={`${stepLabel(p.step!, d.unit, kg)}${isNum(stepTime(p.step!)) ? ` · ${duration(stepTime(p.step!))} into the ride` : ""}`}
                   rows={shown.map((r) => ({
                     name: `Best ${durationLabel(r.duration_s)}`,
                     value: cellText(r.cells[d.steps.indexOf(p.step!)]!),
@@ -109,6 +136,12 @@ export function DurabilityCard({ durability: d, weight }: { durability: Durabili
           </LineChart>
         </ResponsiveContainer>
       )}
+      {d.steps.length >= 2 && timeMarks.length ? (
+        <p className="small muted" style={{ margin: "4px 0 0" }}>
+          Lower axis: elapsed ride time (h:mm) at that much work. It stretches where you rode hard and bunches up through easy
+          riding and stops.
+        </p>
+      ) : null}
     </ChartCard>
   );
 }
@@ -125,7 +158,18 @@ function DurabilityTable({ d, rows, kg }: { d: Durability; rows: DurabilityRow[]
         rows={d.steps.map((step, i) => ({ step, i }))}
         rowKey={(r) => r.step}
         columns={[
-          { key: "step", header: "Work done before", cell: (r) => stepLabel(r.step, d.unit, kg), headerClassName: "left", cellClassName: "left" },
+          {
+            key: "step",
+            header: "Work done before",
+            cell: (r) => (
+              <>
+                {stepLabel(r.step, d.unit, kg)}
+                {r.step && isNum(d.step_times_s?.[r.i]) ? <div className="small muted">at {duration(d.step_times_s[r.i])}</div> : null}
+              </>
+            ),
+            headerClassName: "left",
+            cellClassName: "left",
+          },
           ...rows.map((row) => ({
             key: String(row.duration_s),
             header: `Best ${durationLabel(row.duration_s)}`,
