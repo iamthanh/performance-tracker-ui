@@ -1,12 +1,15 @@
 import { EmptyCard, ErrorCard, LoadingCard, PageHeader, RangePresetPicker } from "@/components";
 import { useRangePreset } from "@/hooks";
+import { addDays } from "@/lib/dates";
 
+import { EnergyCard } from "./components/EnergyCard";
 import { FitnessFatigueCard } from "./components/FitnessFatigueCard";
 import { FitnessTiles } from "./components/FitnessTiles";
 import { FormCard } from "./components/FormCard";
 import { UnscoredNote } from "./components/UnscoredNote";
 import { WeeklyTssCard } from "./components/WeeklyTssCard";
 import { useFitnessData } from "./hooks/useFitnessData";
+import { ENERGY_MAX_DAYS, maxDate } from "./lib/energy";
 
 /** Fitness, fatigue and form over a date range: TrainingPeaks' Performance Management Chart. */
 export function FitnessPage() {
@@ -41,6 +44,7 @@ export function FitnessPage() {
             tick={tick}
             refetching={weeks.isFetching}
           />
+          <EnergyCard start={maxDate(days[0]!.date, addDays(range.end, -(ENERGY_MAX_DAYS - 1)))} end={range.end} tick={tick} />
         </>
       )}
     </>

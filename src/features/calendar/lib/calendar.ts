@@ -1,4 +1,4 @@
-import type { ActivityRow } from "@/api";
+import type { ActivityRow, NutritionDay } from "@/api";
 import { addDays, monthEnd, monthStart, today, weekStart, type ISODate } from "@/lib/dates";
 
 export const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -28,4 +28,15 @@ export function groupByDay(activities: ActivityRow[]): Map<ISODate, ActivityRow[
   }
   for (const list of map.values()) list.sort((a, b) => a.start_time.localeCompare(b.start_time));
   return map;
+}
+
+/** Average kcal eaten per logged day and burned per day the watch reported, in the month of `month`. */
+export function monthEnergy(days: NutritionDay[], month: ISODate): { eaten: number | null; burned: number | null } {
+  // Today is left out: its totals cover only part of the day.
+  const inMonth = days.filter((d) => d.date.slice(0, 7) === month.slice(0, 7) && !d.partial);
+  const mean = (values: number[]) => (values.length ? values.reduce((a, b) => a + b, 0) / values.length : null);
+  return {
+    eaten: mean(inMonth.flatMap((d) => (d.entries && d.intake.kcal !== null ? [d.intake.kcal] : []))),
+    burned: mean(inMonth.flatMap((d) => (d.total_kcal !== null ? [d.total_kcal] : []))),
+  };
 }

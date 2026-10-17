@@ -3,7 +3,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "./endpoints";
-import type { ThresholdMetric } from "./types";
+import type { EntryInput, FoodInput, ThresholdMetric } from "./types";
 
 type Params<K extends keyof typeof api> = Parameters<(typeof api)[K]>[0];
 
@@ -21,6 +21,12 @@ export const queryKeys = {
   body: (p: Params<"body">) => ["body", p] as const,
   heartRate: (day: string) => ["heart-rate", day] as const,
   thresholds: (on?: string) => ["thresholds", on] as const,
+  // Everything nutrition shares one prefix, so a write refreshes all of it at once.
+  nutrition: ["nutrition"] as const,
+  foods: (includeArchived: boolean) => ["nutrition", "foods", includeArchived] as const,
+  nutritionEntries: (p: Params<"nutritionEntries">) => ["nutrition", "entries", p] as const,
+  nutritionDaily: (p: Params<"nutritionDaily">) => ["nutrition", "daily", p] as const,
+  fueling: (source: string, id: string) => ["nutrition", "fueling", source, id] as const,
 };
 
 // keepPreviousData: on a filter change charts keep their last render (dimmed) instead of flashing empty.
@@ -82,4 +88,30 @@ export function useThresholdMutations() {
     onSuccess: invalidate,
   });
   return { set, remove };
+}
+
+export const useFoods = (includeArchived = false) =>
+  useQuery({ queryKey: queryKeys.foods(includeArchived), queryFn: () => api.foods(includeArchived) });
+
+export const useNutritionEntries = (p: Params<"nutritionEntries">) =>
+  useQuery({ queryKey: queryKeys.nutritionEntries(p), queryFn: () => api.nutritionEntries(p), ...keep });
+
+export const useNutritionDaily = (p: Params<"nutritionDaily">) =>
+  useQuery({ queryKey: queryKeys.nutritionDaily(p), queryFn: () => api.nutritionDaily(p), ...keep });
+
+export const useFueling = (source: string, id: string) =>
+  useQuery({ queryKey: queryKeys.fueling(source, id), queryFn: () => api.fueling(source, id) });
+
+/** Food and entry writes; each refreshes every nutrition query (days, entries, fueling, foods). */
+export function useNutritionMutations() {
+  const client = useQueryClient();
+  const onSuccess = () => client.invalidateQueries({ queryKey: queryKeys.nutrition });
+  return {
+    createFood: useMutation({ mutationFn: (body: FoodInput) => api.createFood(body), onSuccess }),
+    updateFood: useMutation({ mutationFn: ({ id, body }: { id: number; body: FoodInput }) => api.updateFood(id, body), onSuccess }),
+    deleteFood: useMutation({ mutationFn: (id: number) => api.deleteFood(id), onSuccess }),
+    createEntry: useMutation({ mutationFn: (body: EntryInput) => api.createEntry(body), onSuccess }),
+    updateEntry: useMutation({ mutationFn: ({ id, body }: { id: number; body: EntryInput }) => api.updateEntry(id, body), onSuccess }),
+    deleteEntry: useMutation({ mutationFn: (id: number) => api.deleteEntry(id), onSuccess }),
+  };
 }

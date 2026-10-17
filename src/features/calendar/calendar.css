@@ -119,3 +119,13 @@
   gap: 0 8px;
   font-variant-numeric: tabular-nums;
 }
+
+.cal-energy {
+  margin-top: auto;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

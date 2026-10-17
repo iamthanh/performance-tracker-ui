@@ -6,7 +6,7 @@ export type ThresholdMetricInfo = { value: ThresholdMetric; label: string; short
 
 /** The thresholds a rider can set, in display order. */
 export const THRESHOLD_METRICS: ThresholdMetricInfo[] = [
-  { value: "ftp_w", label: "FTP", short: "FTP", unit: "W", help: "Auto: 95% of your best 20-minute ride power in the trailing year" },
+  { value: "ftp_w", label: "FTP", short: "FTP", unit: "W", help: "Auto: estimated from your best 3- to 30-minute ride efforts in the trailing year (never below your best hour); it eases down at most 1% a week" },
   { value: "threshold_hr", label: "Threshold heart rate", short: "Threshold HR", unit: "bpm", help: "Auto: your best 20-minute ride heart rate in the trailing year" },
   { value: "max_hr", label: "Max heart rate", short: "Max HR", unit: "bpm", help: "Auto: third-highest best-30-second heart rate in the trailing year" },
   { value: "resting_hr", label: "Resting heart rate", short: "Resting HR", unit: "bpm", help: "No auto value; 50 bpm is assumed until you set one" },

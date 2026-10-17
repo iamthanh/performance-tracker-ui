@@ -42,7 +42,12 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
         detail = body.detail;
         fromApi = true;
       } else if (Array.isArray(body.detail)) {
-        detail = body.detail.map((d: { msg?: string }) => d.msg).join("; ");
+        detail = body.detail
+          .map((d: { msg?: string; loc?: unknown[] }) => {
+            const field = d.loc?.[d.loc.length - 1];
+            return typeof field === "string" ? `${field}: ${d.msg}` : d.msg;
+          })
+          .join("; ");
         fromApi = true;
       }
     } catch {
@@ -52,5 +57,6 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const unreachable = !fromApi && [500, 502, 504].includes(response.status);
     throw new ApiError(response.status, unreachable ? UNREACHABLE : detail, unreachable);
   }
+  if (response.status === 204) return undefined as T; // a delete: no body
   return (await response.json()) as T;
 }

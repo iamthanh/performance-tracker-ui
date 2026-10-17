@@ -2,3 +2,4 @@
 export { ApiError } from "./http";
 export * from "./queries";
 export type * from "./types";
+export { MEALS, NUTRIENT_KEYS } from "./types";

@@ -59,6 +59,21 @@ describe("training", () => {
     expect(thresholdOn(tie, "2026-01-01")).toBe(210);
   });
 
+  // Mirrors the backend's test_timeline_a_declining_auto_value_does_not_override_a_lower_manual_one.
+  it("never lets a declining automatic value override a lower manual one", () => {
+    const declining = [
+      v("2025-06-01", "auto", 263),
+      v("2026-01-05", "auto", 262),
+      v("2026-01-10", "manual", 230),
+      v("2026-01-12", "auto", 261),
+      v("2026-02-20", "auto", 255),
+      v("2026-03-01", "auto", 258),
+    ];
+    expect(thresholdOn(declining, "2026-01-12")).toBe(230);
+    expect(thresholdOn(declining, "2026-02-20")).toBe(230);
+    expect(thresholdOn(declining, "2026-03-01")).toBe(258);
+  });
+
   it("marks each point of the history with the entry that set it", () => {
     // An auto value equal to an earlier manual value is still auto.
     const history = thresholdHistory([v("2026-01-01", "manual", 250), v("2026-02-01", "auto", 260), v("2026-04-01", "auto", 250)], "2026-04-01");

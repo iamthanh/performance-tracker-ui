@@ -7,12 +7,13 @@ training metrics. Nothing leaves your machine.
 
 | Page | What it shows |
 |---|---|
-| **Fitness** | Fitness (CTL), fatigue (ATL) and form (TSB) with daily TSS, like the Performance Management Chart; weekly TSS; ramp rate |
-| **Calendar** | Month view of workouts (duration, TSS, IF, distance) with weekly totals (hours, distance, TSS, kJ) |
+| **Fitness** | Fitness (CTL), fatigue (ATL) and form (TSB) with daily TSS, like the Performance Management Chart; weekly TSS; ramp rate; calories eaten vs burned |
+| **Calendar** | Month view of workouts (duration, TSS, IF, distance) with weekly totals (hours, distance, TSS, kJ); kcal in and out per day |
 | **Activities** | Every workout, sortable and searchable, with TSS, IF, NP, average HR and decoupling |
-| **Workout** | Power, heart rate, cadence, speed and elevation over time with a synced crosshair and readout; NP, IF, TSS, VI, EF, Pw:HR decoupling, work; time in power and HR zones; peak power vs your 90-day best; route; laps |
+| **Workout** | Power, heart rate, cadence, speed and elevation over time with a synced crosshair and readout; NP, IF, TSS, VI, EF, Pw:HR decoupling, work; time in power and HR zones; peak power vs your 90-day best; route; fueling (carbs, fluid and sodium per hour, caffeine, vs energy and estimated carbs burned); laps |
 | **Power curve** | Mean-maximal power from 1 s to 5 h, comparing two date ranges, with the ride that set each best |
 | **Health** | Resting HR, HRV, sleep stages and weight from Garmin next to form; all-day heart rate for any day |
+| **Nutrition** | A day's food and drink by meal against calories burned (your watch's total), with carbs, protein and fat; saved foods for one-tap logging |
 | **Settings** | FTP, threshold HR, max HR and resting HR in effect; set your own from a date on (re-scores workouts); FTP history |
 
 ## Run it
@@ -82,7 +83,7 @@ src/
   main.tsx            entry: global styles, providers, <App/>
   app/                the shell: App (top bar + current page), routes.tsx, nav.ts, layout/, queryClient
   features/<page>/    one folder per page: fitness, calendar, activities (the list), activity-detail (one
-                      workout), power-curve, health, settings
+                      workout), power-curve, health, nutrition, settings
     <Name>Page.tsx    lays out the page from its components; holds only state shared between them
     components/       pieces of this page
     hooks/            the page's data (wrapping api/ queries) and form or view state
@@ -94,10 +95,11 @@ src/
     data/             StatTile, DataTable, Badge
     feedback/         Loading / ErrorState / Empty, their *Card versions, ErrorBoundary
     layout/           PageHeader, Card + CardHeader
+    nutrition/        EntryForm (log food or drink, or a workout's fueling), NutrientFields
   hooks/              generic hooks: useColors (chart colours), useRangePreset, useThemeChoice
   api/                http.ts (fetch + errors), endpoints.ts (one function per endpoint), queries.ts (TanStack
                       Query hooks and query keys), types.ts (response shapes)
-  lib/                generic pure helpers: dates, format, training (threshold rules), paths (in-app URLs), theme
+  lib/                generic pure helpers: dates, format, training (threshold rules), nutrition, paths, theme
   styles/             global CSS in cascade order (index.css imports the rest); page CSS lives with its page
   test/               test setup and helpers (mockApi, renderAt)
 ```

@@ -11,7 +11,7 @@ import { useCalendarMonth } from "./hooks/useCalendarMonth";
 /** A month of workouts by day, with weekly and monthly totals. */
 export function CalendarPage() {
   const { month, go, reset } = useCalendarMonth();
-  const { activities, monthTotals, weekStarts, byDay, weekTotals } = useCalendarData(month);
+  const { activities, monthTotals, weekStarts, byDay, weekTotals, energyByDay, monthEnergy } = useCalendarData(month);
   const totals = monthTotals.data?.periods[0]?.total;
 
   return (
@@ -22,7 +22,7 @@ export function CalendarPage() {
         actions={<MonthNav onPrevious={() => go(-1)} onToday={reset} onNext={() => go(1)} />}
       />
 
-      {totals ? <MonthTotals totals={totals} refetching={monthTotals.isPlaceholderData} /> : null}
+      {totals ? <MonthTotals totals={totals} energy={monthEnergy} refetching={monthTotals.isPlaceholderData} /> : null}
 
       <Card label={`Calendar for ${formatMonth(month)}`} className="calendar-card">
         {activities.isError ? (
@@ -36,6 +36,7 @@ export function CalendarPage() {
             weekStarts={weekStarts}
             byDay={byDay}
             weekTotals={weekTotals}
+            energyByDay={energyByDay}
             refetching={activities.isFetching}
           />
         )}

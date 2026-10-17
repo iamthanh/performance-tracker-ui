@@ -5,5 +5,6 @@ export const NAV_ITEMS = [
   { to: "/activities", label: "Activities" },
   { to: "/power", label: "Power curve" },
   { to: "/health", label: "Health" },
+  { to: "/nutrition", label: "Nutrition" },
   { to: "/settings", label: "Settings" },
 ];

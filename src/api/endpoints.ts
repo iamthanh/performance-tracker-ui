@@ -8,9 +8,15 @@ import type {
   BestPower,
   BodyMeasurement,
   DailyMetric,
+  EntryInput,
+  Food,
+  FoodInput,
+  Fueling,
   Health,
   HeartRateDay,
   LoadDay,
+  NutritionDay,
+  NutritionEntry,
   SleepSession,
   Streams,
   Summary,
@@ -19,6 +25,12 @@ import type {
 } from "./types";
 
 const enc = encodeURIComponent;
+
+const json = (method: "POST" | "PUT", body: unknown): RequestInit => ({
+  method,
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(body),
+});
 
 export const api = {
   health: () => request<Health>("/health"),
@@ -38,11 +50,19 @@ export const api = {
   heartRate: (day: string) => request<HeartRateDay>(`/heart-rate/${enc(day)}`),
   thresholds: (on?: string) => request<Thresholds>(`/thresholds${query({ on })}`),
   setThreshold: (body: { metric: ThresholdMetric; effective_date: string; value: number; note?: string }) =>
-    request<AnalysisResult>("/thresholds", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }),
+    request<AnalysisResult>("/thresholds", json("POST", body)),
   deleteThreshold: (metric: ThresholdMetric, effectiveDate: string) =>
     request<AnalysisResult>(`/thresholds/${enc(metric)}/${enc(effectiveDate)}`, { method: "DELETE" }),
+
+  foods: (includeArchived = false) => request<Food[]>(`/nutrition/foods${query({ include_archived: includeArchived ? "true" : undefined })}`),
+  createFood: (body: FoodInput) => request<Food>("/nutrition/foods", json("POST", body)),
+  updateFood: (id: number, body: FoodInput) => request<Food>(`/nutrition/foods/${id}`, json("PUT", body)),
+  deleteFood: (id: number) => request<void>(`/nutrition/foods/${id}`, { method: "DELETE" }),
+  nutritionEntries: (p: { start_date?: string; end_date?: string; activity_source?: string; activity_source_id?: string }) =>
+    request<NutritionEntry[]>(`/nutrition/entries${query(p)}`),
+  createEntry: (body: EntryInput) => request<NutritionEntry>("/nutrition/entries", json("POST", body)),
+  updateEntry: (id: number, body: EntryInput) => request<NutritionEntry>(`/nutrition/entries/${id}`, json("PUT", body)),
+  deleteEntry: (id: number) => request<void>(`/nutrition/entries/${id}`, { method: "DELETE" }),
+  nutritionDaily: (p: { start_date: string; end_date: string }) => request<NutritionDay[]>(`/nutrition/daily${query(p)}`),
+  fueling: (source: string, id: string) => request<Fueling>(`/activities/${enc(source)}/${enc(id)}/fueling`),
 };
