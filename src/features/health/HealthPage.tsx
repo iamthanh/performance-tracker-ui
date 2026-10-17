@@ -5,13 +5,14 @@ import { DayHeartRateCard } from "./components/DayHeartRateCard";
 import { HealthTiles } from "./components/HealthTiles";
 import { MetricCard } from "./components/MetricCard";
 import { SleepCard } from "./components/SleepCard";
+import { WeightCard } from "./components/WeightCard";
 import { useHealthData } from "./hooks/useHealthData";
 import { HEALTH_PRESETS } from "./lib/series";
 
-/** Recovery markers (resting HR, HRV, sleep, weight) next to training form. */
+/** Recovery markers (resting HR, HRV, sleep) next to training form, and body weight over all time. */
 export function HealthPage() {
-  const { presetId, setPresetId, range } = useRangePreset("90d", HEALTH_PRESETS);
-  const health = useHealthData(range);
+  const { presetId, setPresetId, preset, range } = useRangePreset("90d", HEALTH_PRESETS);
+  const health = useHealthData(range, !!preset.all);
 
   if (health.failed) return <ErrorCard error={health.failed.error} />;
 
@@ -40,7 +41,6 @@ export function HealthPage() {
             nights={health.nights}
             weight={health.weight}
           />
-
           <ChartCard
             title="Form"
             subtitle="Training stress balance, for context: recovery markers usually worsen when form is low"
@@ -48,17 +48,21 @@ export function HealthPage() {
           >
             <DailyLineChart data={health.form} token="series-1" unit="" zero syncId="health" />
           </ChartCard>
+        </>
+      )}
+
+      {/* Always here, on its own range (all time by default): weigh-ins come in spells the page's range often
+          misses. One instance, so its range survives changes of the page's. */}
+      <WeightCard />
+
+      {health.loading || health.empty ? null : (
+        <>
           <div className="grid two">
             <MetricCard title="Resting heart rate" unit="bpm" data={health.resting} token="series-8" />
             <MetricCard title="Heart-rate variability" unit="ms" data={health.hrv} token="series-7" subtitle="Nightly RMSSD" />
           </div>
-
           <SleepCard nights={health.nights} refetching={health.sleep.isFetching} />
-
-          <div className="grid two">
-            <MetricCard title="Weight" unit="kg" data={health.weight} token="series-1" digits={1} />
-            <DayHeartRateCard />
-          </div>
+          <DayHeartRateCard />
         </>
       )}
     </>

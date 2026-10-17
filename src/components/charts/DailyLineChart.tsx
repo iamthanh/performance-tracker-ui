@@ -1,7 +1,7 @@
 import { CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { useColors } from "@/hooks";
-import { formatDay, formatFullDay, type DatedValue } from "@/lib/dates";
+import { dateTickFormatter, daysBetween, formatFullDay, type DatedValue } from "@/lib/dates";
 import { num } from "@/lib/format";
 import type { Token } from "@/lib/theme";
 
@@ -29,11 +29,14 @@ export function DailyLineChart({
   syncId?: string;
 }) {
   const c = useColors();
+  // Days for short spans, months (with the year) for long ones, spaced so a month is not labelled twice.
+  const span = data.length ? daysBetween(data[0]!.date, data[data.length - 1]!.date) : 0;
+  const tick = dateTickFormatter(span);
   return (
     <ResponsiveContainer width="100%" height={160}>
       <ComposedChart data={data} syncId={syncId} syncMethod="value" margin={CHART_MARGIN}>
         <CartesianGrid {...gridProps(c)} />
-        <XAxis dataKey="date" {...axisProps(c)} tickFormatter={formatDay} minTickGap={40} />
+        <XAxis dataKey="date" {...axisProps(c)} tickFormatter={tick} minTickGap={span > 200 ? 70 : 40} />
         <YAxis {...axisProps(c)} width={Y_AXIS_WIDTH} domain={["auto", "auto"]} />
         {zero ? <ReferenceLine y={0} stroke={c.axis} /> : null}
         <Tooltip

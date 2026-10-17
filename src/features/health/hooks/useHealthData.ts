@@ -1,12 +1,13 @@
 import { useMemo } from "react";
 
 import { useBody, useDailyMetrics, useSleep, useTrainingLoad } from "@/api";
+import { trimLeadingEmpty } from "@/lib/training";
 
 import { metricSeries, onePerDay } from "../lib/series";
 import type { Night } from "../lib/types";
 
 /** Every health series over a date range, one value per day. */
-export function useHealthData(range: { start: string; end: string }) {
+export function useHealthData(range: { start: string; end: string }, allTime = false) {
   const metrics = useDailyMetrics({ start_date: range.start, end_date: range.end });
   const sleep = useSleep({ start_date: range.start, end_date: range.end });
   const body = useBody({ start_date: range.start, end_date: range.end });
@@ -38,7 +39,8 @@ export function useHealthData(range: { start: string; end: string }) {
       })),
     [sleep.data],
   );
-  const form = (load.data ?? []).map((d) => ({ date: d.date, value: d.tsb }));
+  // "All time" starts years before the first workout: the form line starts with it.
+  const form = (allTime ? trimLeadingEmpty(load.data ?? []) : (load.data ?? [])).map((d) => ({ date: d.date, value: d.tsb }));
 
   return {
     /** The first failed request, if any. */
