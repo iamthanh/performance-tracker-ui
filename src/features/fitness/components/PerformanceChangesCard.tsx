@@ -41,7 +41,10 @@ export function PerformanceChangesCard({ perf }: { perf: Performance }) {
                   cell: (e) => {
                     const why = splitText(e.split);
                     const ride = e.ride;
-                    const effort = ride?.watts && ride.kg ? `${num(ride.watts)} W at ${num(ride.kg, 1)} kg` : null;
+                    const effort =
+                      ride?.watts && ride.kg
+                        ? `${e.component === "threshold" ? "FTP ≈ " : ""}${num(ride.watts)} W at ${num(ride.kg, 1)} kg`
+                        : null;
                     return (
                       <>
                         {why ?? effort ?? "—"}

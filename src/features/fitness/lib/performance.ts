@@ -46,12 +46,12 @@ export function componentSeries(days: PerformanceDay[], key: PerformanceComponen
   return days.map((d) => ({ date: d.date, value: d.components[key].index }));
 }
 
-/** A rise's cause in words: "power +4.7 %, 1.1 % lighter". */
+/** A rise's cause in words: "power +4.7 %, 1.1 % lighter" (weight_pct is the change in kg: < 0 lighter). */
 export function splitText(split: { power_pct: number; weight_pct: number } | null): string | null {
   if (!split) return null;
   const sign = (v: number) => (v > 0 ? "+" : v < 0 ? "−" : "±");
   const power = `power ${sign(split.power_pct)}${Math.abs(split.power_pct).toFixed(1)} %`;
   const w = split.weight_pct;
-  const weight = Math.abs(w) < 0.05 ? "same weight" : `${Math.abs(w).toFixed(1)} % ${w > 0 ? "lighter" : "heavier"}`;
+  const weight = Math.abs(w) < 0.05 ? "same weight" : `${Math.abs(w).toFixed(1)} % ${w < 0 ? "lighter" : "heavier"}`;
   return `${power}, ${weight}`;
 }

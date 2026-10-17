@@ -568,11 +568,11 @@ export interface PerformanceEvent {
     /** The ride's weight and where it came from (pre_ride, weigh_in, interpolated, estimated, carried). */
     kg: number | null;
     weight_kind: string | null;
-    /** Its key effort in watts (not for durability). */
+    /** Its key effort in watts (the threshold: the new FTP in watts at the ride's weight; not for durability). */
     watts?: number | null;
   } | null;
-  /** How the new best came about against the window's previous best ride: power change and weight change (> 0 =
-   *  lighter), in %. */
+  /** How the new best came about against the ride the previous value rested on: the change in watts and in kg
+   *  (< 0 = lighter), in %; (1 + power) / (1 + weight) is the W/kg change. */
   split: { power_pct: number; weight_pct: number } | null;
 }
 

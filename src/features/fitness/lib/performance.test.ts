@@ -45,8 +45,8 @@ describe("performance index helpers", () => {
   });
 
   it("says whether a rise came from power or weight", () => {
-    expect(splitText({ power_pct: 4.7, weight_pct: 1.1 })).toBe("power +4.7 %, 1.1 % lighter");
-    expect(splitText({ power_pct: -2, weight_pct: -0.2 })).toBe("power −2.0 %, 0.2 % heavier");
+    expect(splitText({ power_pct: 4.7, weight_pct: -1.1 })).toBe("power +4.7 %, 1.1 % lighter");
+    expect(splitText({ power_pct: -2, weight_pct: 0.2 })).toBe("power −2.0 %, 0.2 % heavier");
     expect(splitText({ power_pct: 3, weight_pct: 0 })).toBe("power +3.0 %, same weight");
     expect(splitText(null)).toBeNull();
   });
