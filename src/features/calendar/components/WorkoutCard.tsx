@@ -29,6 +29,7 @@ export function WorkoutCard({ activity: a }: { activity: ActivityRow }) {
         {a.tss !== null ? <span>{num(a.tss)} TSS</span> : <span className="muted">no TSS</span>}
         {a.intensity_factor !== null ? <span>IF {num(a.intensity_factor, 2)}</span> : null}
         {a.distance_m ? <span>{num(a.distance_m / 1000, 1)} km</span> : null}
+        {a.kcal ? <span>{num(a.kcal)} kcal</span> : null}
       </div>
     </Link>
   );

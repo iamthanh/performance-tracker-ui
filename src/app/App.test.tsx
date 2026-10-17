@@ -105,6 +105,7 @@ const activity = (id: string, name: string, tss: number | null) => ({
   decoupling_pct: null,
   tss_method: "power",
   has_streams: true,
+  kcal: tss === null ? null : tss * 10,
 });
 
 it("sorts activities by a column, and flips on a second click", async () => {
@@ -180,4 +181,14 @@ it("logs a saved food on the Nutrition page", async () => {
   await waitFor(() => expect(calls.some((c) => c.init?.method === "POST")).toBe(true));
   const post = calls.find((c) => c.init?.method === "POST")!;
   expect(JSON.parse(String(post.init!.body))).toEqual({ local_date: "2026-10-12", meal: "breakfast", servings: 2, food_id: 7 });
+});
+
+it("shows calories burned and sorts by them", async () => {
+  mockApi({ "/health": health, "/activities": () => [activity("1", "Easy", 40), activity("2", "Hard", 95), activity("3", "No data", null)] });
+  renderAt("/activities");
+  await screen.findByText("Easy");
+  const cells = () => screen.getAllByRole("row").slice(1).map((r) => r.textContent ?? "");
+  expect(cells().find((r) => r.includes("Hard"))).toMatch(/950 kcal/);
+  fireEvent.click(screen.getByRole("button", { name: "Calories" }));
+  expect(cells().map((r) => r.match(/Easy|Hard|No data/)?.[0])).toEqual(["Hard", "Easy", "No data"]); // unknown last
 });
