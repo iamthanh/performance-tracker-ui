@@ -1,6 +1,6 @@
 // Nutrition labels, units and arithmetic shared by the Nutrition page, workout fueling, Calendar and Fitness.
 
-import type { Food, Meal, NutrientKey, Nutrients } from "@/api";
+import type { DrinkRecipe, Food, Meal, NutrientKey, Nutrients } from "@/api";
 
 import { num } from "./format";
 
@@ -65,4 +65,70 @@ export function clockOffset(seconds: number | null): string {
   if (seconds === null) return "—";
   const m = Math.round(seconds / 60);
   return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
+}
+
+// -- drinks ---------------------------------------------------------------------------------------
+
+/** Table salt is 39.3 % sodium (the API uses the same figure). */
+export const SODIUM_MG_PER_G_SALT = 393.4;
+
+/** What `bottles` bottles of `recipe` add up to; mirrors the API's arithmetic, for the form's preview. */
+export function bottleTotals(recipe: DrinkRecipe, bottles: number) {
+  const sum = (...xs: (number | null | undefined)[]) => xs.reduce<number>((t, x) => t + (x ?? 0), 0);
+  const carbs = sum(recipe.maltodextrin_g, recipe.sucrose_g, ...recipe.other.map((o) => o.carbs_g));
+  const glucose = sum(recipe.maltodextrin_g) + sum(recipe.sucrose_g) / 2;
+  const fructose = sum(recipe.sucrose_g) / 2;
+  return {
+    fluid_ml: sum(recipe.water_ml) * bottles,
+    carbs_g: carbs * bottles,
+    sodium_mg: (sum(recipe.salt_g) * SODIUM_MG_PER_G_SALT + sum(...recipe.other.map((o) => o.sodium_mg))) * bottles,
+    caffeine_mg: sum(...recipe.other.map((o) => o.caffeine_mg)) * bottles,
+    kcal: carbs * 4 * bottles,
+    glucose_g: glucose * bottles,
+    fructose_g: fructose * bottles,
+  };
+}
+
+/** "1 : 0.8", glucose to fructose; null without glucose. */
+export function glucoseFructose(glucose: number, fructose: number): string | null {
+  return glucose > 0 ? `1 : ${(fructose / glucose).toFixed(fructose / glucose < 0.1 ? 2 : 1)}` : null;
+}
+
+/** "750 ml · 60 g maltodextrin · 30 g sucrose · 1.5 g salt · caffeine powder": one bottle. */
+export function recipeSummary(recipe: DrinkRecipe): string {
+  const parts = [
+    recipe.water_ml ? `${num(recipe.water_ml)} ml` : null,
+    recipe.maltodextrin_g ? `${num(recipe.maltodextrin_g)} g maltodextrin` : null,
+    recipe.sucrose_g ? `${num(recipe.sucrose_g)} g sucrose` : null,
+    recipe.salt_g ? `${num(recipe.salt_g, recipe.salt_g % 1 ? 1 : 0)} g salt` : null,
+    ...recipe.other.map((o) => o.name.toLowerCase()),
+  ];
+  return parts.filter(Boolean).join(" · ");
+}
+
+// -- body weight -----------------------------------------------------------------------------------
+
+export type WeightUnit = "kg" | "lb";
+export const KG_PER_LB = 0.45359237;
+
+export const toKg = (value: number, unit: WeightUnit) => (unit === "kg" ? value : value * KG_PER_LB);
+export const fromKg = (kg: number, unit: WeightUnit) => (unit === "kg" ? kg : kg / KG_PER_LB);
+
+const WEIGHT_UNIT_KEY = "pt-weight-unit";
+
+/** The weight unit picked last in this browser (kg unless lb was chosen). */
+export function storedWeightUnit(): WeightUnit {
+  try {
+    return localStorage.getItem(WEIGHT_UNIT_KEY) === "lb" ? "lb" : "kg";
+  } catch {
+    return "kg";
+  }
+}
+
+export function saveWeightUnit(unit: WeightUnit): void {
+  try {
+    localStorage.setItem(WEIGHT_UNIT_KEY, unit);
+  } catch {
+    // storage unavailable: the choice lasts for this page only
+  }
 }

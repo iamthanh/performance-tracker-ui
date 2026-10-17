@@ -279,10 +279,32 @@ export interface NutritionEntry extends Nutrients {
   offset_s: number | null;
   food_id: number | null;
   name: string;
+  /** Bottles, for a drink. */
   servings: number;
   note: string | null;
+  kind: "food" | "drink";
+  /** What one bottle holds, for a drink. */
+  recipe: DrinkRecipe | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface OtherIngredient {
+  name: string;
+  grams?: number | null;
+  carbs_g?: number | null;
+  sodium_mg?: number | null;
+  caffeine_mg?: number | null;
+}
+
+/** One bottle of sports drink. */
+export interface DrinkRecipe {
+  water_ml: number | null;
+  /** Table salt; 1 g is 393 mg of sodium. */
+  salt_g: number | null;
+  maltodextrin_g: number | null;
+  sucrose_g: number | null;
+  other: OtherIngredient[];
 }
 
 /** Nutrients not given are filled from the food (per serving x servings). */
@@ -297,6 +319,8 @@ export type EntryInput = Partial<Nutrients> & {
   activity_source_id?: string;
   offset_s?: number;
   note?: string;
+  /** Bottles with a recipe instead of a food. */
+  drink?: Partial<DrinkRecipe> & { bottles: number };
 };
 
 export interface NutritionDay {
@@ -325,6 +349,27 @@ export interface Fueling {
   carb_share_estimate: number | null;
   carbs_burned_g_estimate: number | null;
   carbs_burned_g_per_h_estimate: number | null;
+  /** Bottles drunk during the workout, by ingredient; null without any. */
+  drinks: {
+    bottles: number;
+    water_ml: number;
+    salt_g: number;
+    maltodextrin_g: number;
+    sucrose_g: number;
+    other_carbs_g: number;
+    glucose_g: number;
+    fructose_g: number;
+    fructose_per_glucose: number | null;
+  } | null;
+  weight: WorkoutWeight | null;
+  /** From the weights: change, and sweat rate = (weight lost + fluid drunk) / elapsed hours. */
+  sweat: { change_kg: number; change_pct: number; sweat_l: number; sweat_l_per_h: number | null } | null;
+}
+
+export interface WorkoutWeight {
+  pre_kg: number | null;
+  post_kg: number | null;
+  note: string | null;
 }
 
 // -- importing a file ------------------------------------------------------------------------

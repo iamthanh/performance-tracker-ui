@@ -2,7 +2,7 @@ import { MEALS, useNutritionMutations, type NutritionEntry } from "@/api";
 import { Card, CardHeader, DataTable, Empty, EntryForm } from "@/components";
 import { formatFullDay } from "@/lib/dates";
 import { num } from "@/lib/format";
-import { MEAL_LABELS } from "@/lib/nutrition";
+import { MEAL_LABELS, recipeSummary } from "@/lib/nutrition";
 
 /** Log food and drink for the day, and what is logged so far. */
 export function EntriesCard({ day, entries, stale = false }: { day: string; entries: NutritionEntry[]; stale?: boolean }) {
@@ -26,7 +26,20 @@ export function EntriesCard({ day, entries, stale = false }: { day: string; entr
             rowKey={(e) => e.id}
             columns={[
               { key: "meal", header: "Meal", cell: (e) => MEAL_LABELS[e.meal] },
-              { key: "name", header: "Item", headerClassName: "left", cellClassName: "left", cell: (e) => e.name },
+              {
+                key: "name",
+                header: "Item",
+                headerClassName: "left",
+                cellClassName: "left",
+                cell: (e) =>
+                  e.kind === "drink" && e.recipe ? (
+                    <>
+                      {e.name} <span className="muted small">({recipeSummary(e.recipe)})</span>
+                    </>
+                  ) : (
+                    e.name
+                  ),
+              },
               { key: "servings", header: "Servings", cell: (e) => num(e.servings, Number.isInteger(e.servings) ? 0 : 1) },
               { key: "kcal", header: "kcal", cell: (e) => num(e.kcal) },
               { key: "carbs", header: "Carbs (g)", cell: (e) => num(e.carbs_g) },
