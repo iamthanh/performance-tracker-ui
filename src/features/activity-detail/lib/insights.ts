@@ -25,9 +25,17 @@ export function stepText(step: number): string {
   return num(step, Number.isInteger(step) ? 0 : 1);
 }
 
-/** Column heading of a durability step: "From the start", "After 10 kJ/kg". */
-export function stepLabel(step: number, unit: Durability["unit"]): string {
-  return step === 0 ? "From the start" : `After ${stepText(step)} ${unit}`;
+/** Heading of a durability step: "From the start", "After 700 kJ", with a weight "After 700 kJ (10.0 kJ/kg)". */
+export function stepLabel(step: number, unit: Durability["unit"], kg?: number | null): string {
+  if (step === 0) return "From the start";
+  const kjPerKg = unit === "kJ" ? perKg(step, kg) : null;
+  return `After ${stepText(step)} ${unit}${kjPerKg === null ? "" : ` (${num(kjPerKg, 1)} kJ/kg)`}`;
+}
+
+/** Round x-axis ticks for a durability chart: 100, 200, 500 or 1000 kJ apart, at most about 10. */
+export function stepTicks(last: number): number[] {
+  const spacing = [100, 200, 500, 1000, 2000, 5000].find((s) => last / s <= 10) ?? 10000;
+  return Array.from({ length: Math.floor(last / spacing) + 1 }, (_, i) => i * spacing);
 }
 
 export type DurabilityCell = { watts: number | null; ofFresh: number | null };

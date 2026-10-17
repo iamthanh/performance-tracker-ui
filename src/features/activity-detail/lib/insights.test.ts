@@ -1,6 +1,6 @@
 import type { Durability } from "@/api";
 
-import { durabilityChart, durabilityRows, perKg, stepLabel, worstFade, wPerKg } from "./insights";
+import { durabilityChart, durabilityRows, perKg, stepLabel, stepTicks, worstFade, wPerKg } from "./insights";
 
 const D: Durability = {
   unit: "kJ/kg",
@@ -25,6 +25,14 @@ describe("ride insights", () => {
     expect(stepLabel(0, "kJ")).toBe("From the start");
     expect(stepLabel(2000, "kJ")).toBe("After 2,000 kJ");
     expect(stepLabel(2.5, "kJ/kg")).toBe("After 2.5 kJ/kg");
+    expect(stepLabel(700, "kJ", 70)).toBe("After 700 kJ (10.0 kJ/kg)");
+    expect(stepLabel(0, "kJ", 70)).toBe("From the start");
+  });
+
+  it("spaces chart ticks so there are at most about ten", () => {
+    expect(stepTicks(900)).toEqual([0, 100, 200, 300, 400, 500, 600, 700, 800, 900]);
+    expect(stepTicks(1300)).toEqual([0, 200, 400, 600, 800, 1000, 1200]);
+    expect(stepTicks(4400)).toEqual([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]);
   });
 
   it("shows each step as a share of the from-the-start best", () => {
