@@ -137,9 +137,12 @@ export type Streams = Partial<Record<Channel, (number | null)[]>> & { time: numb
 
 export interface RideWeight {
   kg: number;
-  /** Weighed before this workout, or the latest body-weight measurement up to its day. */
+  /** Weighed before this workout, or the average of the week's weigh-ins up to its day (none over a month old). */
   origin: "pre_workout" | "body";
+  /** The latest weigh-in used. */
   date: string;
+  /** How many weigh-ins were averaged. */
+  count?: number;
 }
 
 export interface Durability {

@@ -17,7 +17,9 @@ export function wPerKg(watts: number | null | undefined, kg: number | null | und
 export function weightNote(weight: RideWeight): string {
   return weight.origin === "pre_workout"
     ? `${num(weight.kg, 1)} kg, weighed before the ride`
-    : `${num(weight.kg, 1)} kg, latest weigh-in (${formatDay(weight.date)})`;
+    : weight.count && weight.count > 1
+      ? `${num(weight.kg, 1)} kg, average of ${weight.count} weigh-ins to ${formatDay(weight.date)}`
+      : `${num(weight.kg, 1)} kg, weigh-in of ${formatDay(weight.date)}`;
 }
 
 /** A durability step in kJ: "1,200". */
